@@ -2,7 +2,7 @@
 client - server desktop messenger
 
 ## Powered by
-- Qt 5.12.11
+- Qt
 - CMake
 - PostgreSQL
 
