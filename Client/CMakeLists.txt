@@ -19,7 +19,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE QT_NO_CAST_FROM_ASCII)
 set_target_properties(${PROJECT_NAME} PROPERTIES
         AUTOMOC ON
         AUTOUIC ON
-        CXX_STANDARD 11
+        CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
         VERSION "1.0.0"
         EXPORT_NAME SimpleChatClient
