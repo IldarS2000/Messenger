@@ -33,7 +33,7 @@ void ChatClient::login(const QString& userName)
         clientStream.setVersion(serializerVersion);
 
         QJsonObject dataUnit;
-        dataUnit["type"] = "login";
+        dataUnit["type"]     = "login";
         dataUnit["username"] = userName;
         clientStream << QJsonDocument(dataUnit).toJson(QJsonDocument::Compact);
     }
@@ -114,7 +114,7 @@ void ChatClient::onReadyRead()
         socketStream.startTransaction();
         socketStream >> jsonData;
         if (socketStream.commitTransaction()) {
-            QJsonParseError parseError = {0};
+            QJsonParseError parseError  = {0};
             const QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData, &parseError);
             if (parseError.error == QJsonParseError::NoError) {
                 if (jsonDoc.isObject()) {

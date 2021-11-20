@@ -25,7 +25,7 @@ void messageHandler(const QtMsgType type, const QMessageLogContext& context, con
     std::string filePath = context.file ? context.file : "";
     std::string fileName = parseFileName(filePath);
 
-    const char* function = context.function ? context.function : "";
+    const char* const function = context.function ? context.function : "";
     std::string level;
 
     switch (type) {
