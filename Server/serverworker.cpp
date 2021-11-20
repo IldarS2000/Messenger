@@ -1,15 +1,15 @@
-#include "serverworker.h"
 #include <QDataStream>
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QJsonObject>
-ServerWorker::ServerWorker(QObject *parent)
-    : QObject(parent)
-    , m_serverSocket(new QTcpSocket(this))
+#include "serverworker.h"
+
+ServerWorker::ServerWorker(QObject* parent) : QObject(parent), m_serverSocket(new QTcpSocket(this))
 {
     connect(m_serverSocket, &QTcpSocket::readyRead, this, &ServerWorker::receiveJson);
     connect(m_serverSocket, &QTcpSocket::disconnected, this, &ServerWorker::disconnectedFromClient);
-    connect(m_serverSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this, &ServerWorker::error);
+    connect(m_serverSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
+            &ServerWorker::error);
 }
 
 
@@ -18,7 +18,7 @@ bool ServerWorker::setSocketDescriptor(qintptr socketDescriptor)
     return m_serverSocket->setSocketDescriptor(socketDescriptor);
 }
 
-void ServerWorker::sendJson(const QJsonObject &json)
+void ServerWorker::sendJson(const QJsonObject& json)
 {
     const QByteArray jsonData = QJsonDocument(json).toJson();
     emit logMessage(QLatin1String("Sending to ") + userName() + QLatin1String(" - ") + QString::fromUtf8(jsonData));
@@ -40,7 +40,7 @@ QString ServerWorker::userName() const
     return result;
 }
 
-void ServerWorker::setUserName(const QString &userName)
+void ServerWorker::setUserName(const QString& userName)
 {
     m_userNameLock.lockForWrite();
     m_userName = userName;
@@ -52,17 +52,19 @@ void ServerWorker::receiveJson()
     QByteArray jsonData;
     QDataStream socketStream(m_serverSocket);
     socketStream.setVersion(QDataStream::Qt_5_7);
-    for (;;) {
+    while(true) {
         socketStream.startTransaction();
         socketStream >> jsonData;
         if (socketStream.commitTransaction()) {
-            QJsonParseError parseError;
+            QJsonParseError parseError = {0};
             const QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData, &parseError);
             if (parseError.error == QJsonParseError::NoError) {
-                if (jsonDoc.isObject())
+                if (jsonDoc.isObject()) {
                     emit jsonReceived(jsonDoc.object());
-                else
+                }
+                else {
                     emit logMessage(QLatin1String("Invalid message: ") + QString::fromUtf8(jsonData));
+                }
             } else {
                 emit logMessage(QLatin1String("Invalid message: ") + QString::fromUtf8(jsonData));
             }
@@ -71,5 +73,3 @@ void ServerWorker::receiveJson()
         }
     }
 }
-
-
