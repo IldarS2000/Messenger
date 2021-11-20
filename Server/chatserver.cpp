@@ -2,6 +2,7 @@
 #include <functional>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTimer>
 #include "chatserver.h"
 
 ChatServer::ChatServer(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
@@ -47,10 +48,10 @@ void ChatServer::incomingConnection(const qintptr socketDescriptor)
     emit logMessage("New client Connected");
 }
 
-void ChatServer::sendJson(ServerWorker* destination, const QJsonObject& message)
+void ChatServer::sendJson(ServerWorker* const destination, const QJsonObject& message)
 {
     Q_ASSERT(destination);
-    destination->sendJson(message);
+    QTimer::singleShot(0, destination, [destination, message] { destination->sendJson(message); });
 }
 
 void ChatServer::broadcast(const QJsonObject& message, ServerWorker* const exclude)

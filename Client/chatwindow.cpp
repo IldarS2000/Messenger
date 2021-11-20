@@ -12,6 +12,7 @@ ChatWindow::ChatWindow(QWidget* parent)
     ui->setupUi(this);
     chatModel->insertColumn(0);
     ui->chatView->setModel(chatModel);
+    ui->listWidget->setFocusPolicy(Qt::NoFocus);
 
     // handle signals from logic view of client
     connect(chatClient, &ChatClient::connected, this, &ChatWindow::connectedToServer);
@@ -140,10 +141,17 @@ void ChatWindow::userEventImpl(const QString& username, const QString& event)
 void ChatWindow::userJoined(const QString& username)
 {
     userEventImpl(username, "joined the group");
+    ui->listWidget->addItem(username);
 }
 void ChatWindow::userLeft(const QString& username)
 {
     userEventImpl(username, "left the group");
+    QList<QListWidgetItem*> items = ui->listWidget->findItems(username, Qt::MatchExactly);
+    if (items.isEmpty()) {
+        return;
+    }
+
+    delete items.at(0);
 }
 
 void ChatWindow::error(const QAbstractSocket::SocketError socketError)

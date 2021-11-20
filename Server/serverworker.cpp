@@ -39,7 +39,7 @@ void ServerWorker::disconnectFromClient()
 QString ServerWorker::getUserName() const
 {
     userNameLock.lockForRead();
-    QString result = userName;
+    const QString result = userName;
     userNameLock.unlock();
     return result;
 }
