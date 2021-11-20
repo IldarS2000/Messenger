@@ -29,12 +29,15 @@ private slots:
     void attemptLogin(const QString& userName);
     void loggedIn();
     void loginFailed(const QString& reason);
-    void messageReceived(const QString& sender, const QString& text);
+    void messageReceived(const QString& sender, const QString& message);
     void sendMessage();
     void disconnectedFromServer();
     void userJoined(const QString& username);
     void userLeft(const QString& username);
     void error(QAbstractSocket::SocketError socketError);
+
+private:
+    void userEventImpl(const QString& username, const QString& event);
 };
 
 #endif // CHATWINDOW_H
