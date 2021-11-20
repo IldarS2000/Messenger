@@ -9,25 +9,25 @@
 ChatWindow::ChatWindow(QWidget* parent)
     : QWidget(parent), ui(new Ui::ChatWindow) // create the elements defined in the .ui file
       ,
-      m_chatClient(new ChatClient(this)) // create the chat client
+      chatClient(new ChatClient(this)) // create the chat client
       ,
-      m_chatModel(new QStandardItemModel(this)) // create the model to hold the messages
+      chatModel(new QStandardItemModel(this)) // create the model to hold the messages
 {
     // set up of the .ui file
     ui->setupUi(this);
     // the model for the messages will have 1 column
-    m_chatModel->insertColumn(0);
+    chatModel->insertColumn(0);
     // set the model as the data source vor the list view
-    ui->chatView->setModel(m_chatModel);
+    ui->chatView->setModel(chatModel);
     // connect the signals from the chat client to the slots in this ui
-    connect(m_chatClient, &ChatClient::connected, this, &ChatWindow::connectedToServer);
-    connect(m_chatClient, &ChatClient::loggedIn, this, &ChatWindow::loggedIn);
-    connect(m_chatClient, &ChatClient::loginError, this, &ChatWindow::loginFailed);
-    connect(m_chatClient, &ChatClient::messageReceived, this, &ChatWindow::messageReceived);
-    connect(m_chatClient, &ChatClient::disconnected, this, &ChatWindow::disconnectedFromServer);
-    connect(m_chatClient, &ChatClient::error, this, &ChatWindow::error);
-    connect(m_chatClient, &ChatClient::userJoined, this, &ChatWindow::userJoined);
-    connect(m_chatClient, &ChatClient::userLeft, this, &ChatWindow::userLeft);
+    connect(chatClient, &ChatClient::connected, this, &ChatWindow::connectedToServer);
+    connect(chatClient, &ChatClient::loggedIn, this, &ChatWindow::loggedIn);
+    connect(chatClient, &ChatClient::loginError, this, &ChatWindow::loginFailed);
+    connect(chatClient, &ChatClient::messageReceived, this, &ChatWindow::messageReceived);
+    connect(chatClient, &ChatClient::disconnected, this, &ChatWindow::disconnectedFromServer);
+    connect(chatClient, &ChatClient::error, this, &ChatWindow::error);
+    connect(chatClient, &ChatClient::userJoined, this, &ChatWindow::userJoined);
+    connect(chatClient, &ChatClient::userLeft, this, &ChatWindow::userLeft);
     // connect the connect button to a slot that will attempt the connection
     connect(ui->connectButton, &QPushButton::clicked, this, &ChatWindow::attemptConnection);
     // connect the click of the "send" button and the press of the enter while typing to the slot that sends the message
@@ -52,7 +52,7 @@ void ChatWindow::attemptConnection()
     // disable the connect button to prevent the user clicking it again
     ui->connectButton->setEnabled(false);
     // tell the client to connect to the host using the port 1967
-    m_chatClient->connectToServer(QHostAddress(hostAddress), 1967);
+    chatClient->connectToServer(QHostAddress(hostAddress), 1967);
 }
 
 void ChatWindow::connectedToServer()
@@ -61,7 +61,7 @@ void ChatWindow::connectedToServer()
     const QString newUsername = QInputDialog::getText(this, tr("Chose Username"), tr("Username"));
     if (newUsername.isEmpty()) {
         // if the user clicked cancel or typed nothing, we just disconnect from the server
-        return m_chatClient->disconnectFromHost();
+        return chatClient->disconnectFromHost();
     }
     // try to login with the given username
     attemptLogin(newUsername);
@@ -70,7 +70,7 @@ void ChatWindow::connectedToServer()
 void ChatWindow::attemptLogin(const QString& userName)
 {
     // use the client to attempt a log in with the given username
-    m_chatClient->login(userName);
+    chatClient->login(userName);
 }
 
 void ChatWindow::loggedIn()
@@ -80,7 +80,7 @@ void ChatWindow::loggedIn()
     ui->messageEdit->setEnabled(true);
     ui->chatView->setEnabled(true);
     // clear the user name record
-    m_lastUserName.clear();
+    lastUserName.clear();
 }
 
 void ChatWindow::loginFailed(const QString& reason)
@@ -95,32 +95,32 @@ void ChatWindow::loginFailed(const QString& reason)
 void ChatWindow::messageReceived(const QString& sender, const QString& text)
 {
     // store the index of the new row to append to the model containing the messages
-    int newRow = m_chatModel->rowCount();
+    int newRow = chatModel->rowCount();
     // we display a line containing the username only if it's different from the last username we displayed
-    if (m_lastUserName != sender) {
+    if (lastUserName != sender) {
         // store the last displayed username
-        m_lastUserName = sender;
+        lastUserName = sender;
         // create a bold default font
         QFont boldFont;
         boldFont.setBold(true);
         // insert 2 row, one for the message and one for the username
-        m_chatModel->insertRows(newRow, 2);
+        chatModel->insertRows(newRow, 2);
         // store the username in the model
-        m_chatModel->setData(m_chatModel->index(newRow, 0), sender + QLatin1Char(':'));
+        chatModel->setData(chatModel->index(newRow, 0), sender + QLatin1Char(':'));
         // set the alignment for the username
-        m_chatModel->setData(m_chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter),
+        chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter),
                              Qt::TextAlignmentRole);
         // set the for the username
-        m_chatModel->setData(m_chatModel->index(newRow, 0), boldFont, Qt::FontRole);
+        chatModel->setData(chatModel->index(newRow, 0), boldFont, Qt::FontRole);
         ++newRow;
     } else {
         // insert a row for the message
-        m_chatModel->insertRow(newRow);
+        chatModel->insertRow(newRow);
     }
     // store the message in the model
-    m_chatModel->setData(m_chatModel->index(newRow, 0), text);
+    chatModel->setData(chatModel->index(newRow, 0), text);
     // set the alignment for the message
-    m_chatModel->setData(m_chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter), Qt::TextAlignmentRole);
+    chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter), Qt::TextAlignmentRole);
     // scroll the view to display the new message
     ui->chatView->scrollToBottom();
 }
@@ -128,22 +128,22 @@ void ChatWindow::messageReceived(const QString& sender, const QString& text)
 void ChatWindow::sendMessage()
 {
     // we use the client to send the message that the user typed
-    m_chatClient->sendMessage(ui->messageEdit->text());
+    chatClient->sendMessage(ui->messageEdit->text());
     // now we add the message to the list
     // store the index of the new row to append to the model containing the messages
-    const int newRow = m_chatModel->rowCount();
+    const int newRow = chatModel->rowCount();
     // insert a row for the message
-    m_chatModel->insertRow(newRow);
+    chatModel->insertRow(newRow);
     // store the message in the model
-    m_chatModel->setData(m_chatModel->index(newRow, 0), ui->messageEdit->text());
+    chatModel->setData(chatModel->index(newRow, 0), ui->messageEdit->text());
     // set the alignment for the message
-    m_chatModel->setData(m_chatModel->index(newRow, 0), int(Qt::AlignRight | Qt::AlignVCenter), Qt::TextAlignmentRole);
+    chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignRight | Qt::AlignVCenter), Qt::TextAlignmentRole);
     // clear the content of the message editor
     ui->messageEdit->clear();
     // scroll the view to display the new message
     ui->chatView->scrollToBottom();
     // reset the last printed username
-    m_lastUserName.clear();
+    lastUserName.clear();
 }
 
 void ChatWindow::disconnectedFromServer()
@@ -158,42 +158,42 @@ void ChatWindow::disconnectedFromServer()
     // enable the button to connect to the server again
     ui->connectButton->setEnabled(true);
     // reset the last printed username
-    m_lastUserName.clear();
+    lastUserName.clear();
 }
 
 void ChatWindow::userJoined(const QString& username)
 {
     // store the index of the new row to append to the model containing the messages
-    const int newRow = m_chatModel->rowCount();
+    const int newRow = chatModel->rowCount();
     // insert a row
-    m_chatModel->insertRow(newRow);
+    chatModel->insertRow(newRow);
     // store in the model the message to comunicate a user joined
-    m_chatModel->setData(m_chatModel->index(newRow, 0), tr("%1 Joined the Chat").arg(username));
+    chatModel->setData(chatModel->index(newRow, 0), tr("%1 Joined the Chat").arg(username));
     // set the alignment for the text
-    m_chatModel->setData(m_chatModel->index(newRow, 0), Qt::AlignCenter, Qt::TextAlignmentRole);
+    chatModel->setData(chatModel->index(newRow, 0), Qt::AlignCenter, Qt::TextAlignmentRole);
     // set the color for the text
-    m_chatModel->setData(m_chatModel->index(newRow, 0), QBrush(Qt::blue), Qt::ForegroundRole);
+    chatModel->setData(chatModel->index(newRow, 0), QBrush(Qt::blue), Qt::ForegroundRole);
     // scroll the view to display the new message
     ui->chatView->scrollToBottom();
     // reset the last printed username
-    m_lastUserName.clear();
+    lastUserName.clear();
 }
 void ChatWindow::userLeft(const QString& username)
 {
     // store the index of the new row to append to the model containing the messages
-    const int newRow = m_chatModel->rowCount();
+    const int newRow = chatModel->rowCount();
     // insert a row
-    m_chatModel->insertRow(newRow);
+    chatModel->insertRow(newRow);
     // store in the model the message to comunicate a user left
-    m_chatModel->setData(m_chatModel->index(newRow, 0), tr("%1 Left the Chat").arg(username));
+    chatModel->setData(chatModel->index(newRow, 0), tr("%1 Left the Chat").arg(username));
     // set the alignment for the text
-    m_chatModel->setData(m_chatModel->index(newRow, 0), Qt::AlignCenter, Qt::TextAlignmentRole);
+    chatModel->setData(chatModel->index(newRow, 0), Qt::AlignCenter, Qt::TextAlignmentRole);
     // set the color for the text
-    m_chatModel->setData(m_chatModel->index(newRow, 0), QBrush(Qt::red), Qt::ForegroundRole);
+    chatModel->setData(chatModel->index(newRow, 0), QBrush(Qt::red), Qt::ForegroundRole);
     // scroll the view to display the new message
     ui->chatView->scrollToBottom();
     // reset the last printed username
-    m_lastUserName.clear();
+    lastUserName.clear();
 }
 
 void ChatWindow::error(QAbstractSocket::SocketError socketError)
@@ -256,5 +256,5 @@ void ChatWindow::error(QAbstractSocket::SocketError socketError)
     ui->messageEdit->setEnabled(false);
     ui->chatView->setEnabled(false);
     // reset the last printed username
-    m_lastUserName.clear();
+    lastUserName.clear();
 }

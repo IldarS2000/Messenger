@@ -19,10 +19,10 @@ protected:
     void incomingConnection(qintptr socketDescriptor) override;
 
 private:
-    const int m_idealThreadCount;
-    QVector<QThread*> m_availableThreads;
-    QVector<int> m_threadsLoad;
-    QVector<ServerWorker*> m_clients;
+    const int idealThreadCount;
+    QVector<QThread*> availableThreads;
+    QVector<int> threadsLoad;
+    QVector<ServerWorker*> clients;
 private slots:
     void broadcast(const QJsonObject& message, ServerWorker* exclude);
     void jsonReceived(ServerWorker* sender, const QJsonObject& doc);

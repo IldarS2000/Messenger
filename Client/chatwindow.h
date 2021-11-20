@@ -20,9 +20,9 @@ public:
 
 private:
     Ui::ChatWindow* ui;
-    ChatClient* m_chatClient;
-    QStandardItemModel* m_chatModel;
-    QString m_lastUserName;
+    ChatClient* chatClient;
+    QStandardItemModel* chatModel;
+    QString lastUserName;
 private slots:
     void attemptConnection();
     void connectedToServer();

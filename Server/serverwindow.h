@@ -18,7 +18,7 @@ public:
 
 private:
     Ui::ServerWindow* ui;
-    ChatServer* m_chatServer;
+    ChatServer* chatServer;
 private slots:
     void toggleStartServer();
     void logMessage(const QString& msg);

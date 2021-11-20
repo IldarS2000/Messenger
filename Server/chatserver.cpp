@@ -6,15 +6,15 @@
 #include "chatserver.h"
 #include "serverworker.h"
 
-ChatServer::ChatServer(QObject* parent) : QTcpServer(parent), m_idealThreadCount(qMax(QThread::idealThreadCount(), 1))
+ChatServer::ChatServer(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
 {
-    m_availableThreads.reserve(m_idealThreadCount);
-    m_threadsLoad.reserve(m_idealThreadCount);
+    availableThreads.reserve(idealThreadCount);
+    threadsLoad.reserve(idealThreadCount);
 }
 
 ChatServer::~ChatServer()
 {
-    for (QThread* singleThread : m_availableThreads) {
+    for (QThread* singleThread : availableThreads) {
         singleThread->quit();
         singleThread->wait();
     }
@@ -27,26 +27,26 @@ void ChatServer::incomingConnection(qintptr socketDescriptor)
         worker->deleteLater();
         return;
     }
-    int threadIdx = m_availableThreads.size();
-    if (threadIdx < m_idealThreadCount) { // we can add a new thread
-        m_availableThreads.append(new QThread(this));
-        m_threadsLoad.append(1);
-        m_availableThreads.last()->start();
+    int threadIdx = availableThreads.size();
+    if (threadIdx < idealThreadCount) { // we can add a new thread
+        availableThreads.append(new QThread(this));
+        threadsLoad.append(1);
+        availableThreads.last()->start();
     } else {
         // find the thread with the least amount of clients and use it
         threadIdx =
-                std::distance(m_threadsLoad.cbegin(), std::min_element(m_threadsLoad.cbegin(), m_threadsLoad.cend()));
-        ++m_threadsLoad[threadIdx];
+                std::distance(threadsLoad.cbegin(), std::min_element(threadsLoad.cbegin(), threadsLoad.cend()));
+        ++threadsLoad[threadIdx];
     }
-    worker->moveToThread(m_availableThreads.at(threadIdx));
-    connect(m_availableThreads.at(threadIdx), &QThread::finished, worker, &QObject::deleteLater);
+    worker->moveToThread(availableThreads.at(threadIdx));
+    connect(availableThreads.at(threadIdx), &QThread::finished, worker, &QObject::deleteLater);
     connect(worker, &ServerWorker::disconnectedFromClient, this,
             std::bind(&ChatServer::userDisconnected, this, worker, threadIdx));
     connect(worker, &ServerWorker::error, this, std::bind(&ChatServer::userError, this, worker));
     connect(worker, &ServerWorker::jsonReceived, this,
             std::bind(&ChatServer::jsonReceived, this, worker, std::placeholders::_1));
     connect(this, &ChatServer::stopAllClients, worker, &ServerWorker::disconnectFromClient);
-    m_clients.append(worker);
+    clients.append(worker);
     emit logMessage("New client Connected");
 }
 
@@ -58,7 +58,7 @@ void ChatServer::sendJson(ServerWorker* destination, const QJsonObject& message)
 
 void ChatServer::broadcast(const QJsonObject& message, ServerWorker* exclude)
 {
-    for (ServerWorker* worker : m_clients) {
+    for (ServerWorker* worker : clients) {
         Q_ASSERT(worker);
         if (worker == exclude) {
             continue;
@@ -71,7 +71,7 @@ void ChatServer::jsonReceived(ServerWorker* sender, const QJsonObject& json)
 {
     Q_ASSERT(sender);
     emit logMessage(QLatin1String("JSON received ") + QString::fromUtf8(QJsonDocument(json).toJson()));
-    if (sender->userName().isEmpty()) {
+    if (sender->getUserName().isEmpty()) {
         return jsonFromLoggedOut(sender, json);
     }
     jsonFromLoggedIn(sender, json);
@@ -79,9 +79,9 @@ void ChatServer::jsonReceived(ServerWorker* sender, const QJsonObject& json)
 
 void ChatServer::userDisconnected(ServerWorker* sender, int threadIdx)
 {
-    --m_threadsLoad[threadIdx];
-    m_clients.removeAll(sender);
-    const QString userName = sender->userName();
+    --threadsLoad[threadIdx];
+    clients.removeAll(sender);
+    const QString userName = sender->getUserName();
     if (!userName.isEmpty()) {
         QJsonObject disconnectedMessage;
         disconnectedMessage["type"] = "userdisconnected";
@@ -95,7 +95,7 @@ void ChatServer::userDisconnected(ServerWorker* sender, int threadIdx)
 void ChatServer::userError(ServerWorker* sender)
 {
     Q_UNUSED(sender)
-    emit logMessage(QLatin1String("Error from ") + sender->userName());
+    emit logMessage(QLatin1String("Error from ") + sender->getUserName());
 }
 
 void ChatServer::stopServer()
@@ -122,11 +122,11 @@ void ChatServer::jsonFromLoggedOut(ServerWorker* sender, const QJsonObject& docO
     if (newUserName.isEmpty()) {
         return;
     }
-    for (ServerWorker* worker : qAsConst(m_clients)) {
+    for (ServerWorker* worker : qAsConst(clients)) {
         if (worker == sender) {
             continue;
         }
-        if (worker->userName().compare(newUserName, Qt::CaseInsensitive) == 0) {
+        if (worker->getUserName().compare(newUserName, Qt::CaseInsensitive) == 0) {
             QJsonObject message;
             message["type"] = "login";
             message["success"] = false;
@@ -167,6 +167,6 @@ void ChatServer::jsonFromLoggedIn(ServerWorker* sender, const QJsonObject& docOb
     QJsonObject message;
     message["type"] = "message";
     message["text"] = text;
-    message["sender"] = sender->userName();
+    message["sender"] = sender->getUserName();
     broadcast(message, sender);
 }

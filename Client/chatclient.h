@@ -30,8 +30,8 @@ signals:
     void userLeft(const QString& username);
 
 private:
-    QTcpSocket* m_clientSocket;
-    bool m_loggedIn;
+    QTcpSocket* clientSocket;
+    bool logged;
     void jsonReceived(const QJsonObject& doc);
 };
 
