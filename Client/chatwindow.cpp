@@ -3,8 +3,7 @@
 #include <QMessageBox>
 #include <QHostAddress>
 #include "chatwindow.h"
-#include "ui_chatwindow.h"
-#include "chatclient.h"
+#include "ui_window.h"
 
 ChatWindow::ChatWindow(QWidget* parent)
     : QWidget(parent), ui(new Ui::ChatWindow) // create the elements defined in the .ui file
