@@ -1,13 +1,15 @@
 project(Server LANGUAGES CXX)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+include_directories(../common)
 find_package(Qt5 5.7 COMPONENTS
 		Core
 		Gui
 		Widgets
 		Network
 		REQUIRED)
-aux_source_directory(. SOURCES)
+aux_source_directory(../Server SOURCES)
+aux_source_directory(../common SOURCES)
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE
 		Qt5::Core

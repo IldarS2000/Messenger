@@ -1,0 +1,4 @@
+#ifndef MESSENGER_UTILS_H
+#define MESSENGER_UTILS_H
+
+#endif // MESSENGER_UTILS_H
