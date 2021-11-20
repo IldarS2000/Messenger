@@ -3,6 +3,7 @@
 #include <QJsonParseError>
 #include <QJsonObject>
 #include "chatclient.h"
+#include "constants.h"
 
 ChatClient::ChatClient(QObject* parent) : QObject(parent), clientSocket(new QTcpSocket(this)), logged(false)
 {
@@ -25,7 +26,7 @@ void ChatClient::login(const QString& userName)
         // create a QDataStream operating on the socket
         QDataStream clientStream(clientSocket);
         // set the version so that programs compiled with different versions of Qt can agree on how to serialise
-        clientStream.setVersion(QDataStream::Qt_5_7);
+        clientStream.setVersion(serializerVersion);
         // Create the JSON we want to send
         QJsonObject message;
         message["type"] = "login";
@@ -43,7 +44,7 @@ void ChatClient::sendMessage(const QString& text)
     // create a QDataStream operating on the socket
     QDataStream clientStream(clientSocket);
     // set the version so that programs compiled with different versions of Qt can agree on how to serialise
-    clientStream.setVersion(QDataStream::Qt_5_7);
+    clientStream.setVersion(serializerVersion);
     // Create the JSON we want to send
     QJsonObject message;
     message["type"] = "message";
@@ -129,7 +130,7 @@ void ChatClient::onReadyRead()
     // create a QDataStream operating on the socket
     QDataStream socketStream(clientSocket);
     // set the version so that programs compiled with different versions of Qt can agree on how to serialise
-    socketStream.setVersion(QDataStream::Qt_5_7);
+    socketStream.setVersion(serializerVersion);
     // start an infinite loop
     while(true) {
         // we start a transaction so we can revert to the previous state in case we try to read more data than is

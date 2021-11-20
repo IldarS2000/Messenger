@@ -2,6 +2,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include "serverworker.h"
+#include "constants.h"
 
 ServerWorker::ServerWorker(QObject* parent) : QObject(parent), serverSocket(new QTcpSocket(this))
 {
@@ -21,7 +22,7 @@ void ServerWorker::sendJson(const QJsonObject& json)
     const QByteArray jsonData = QJsonDocument(json).toJson();
     emit logMessage(QLatin1String("Sending to ") + getUserName() + QLatin1String(" - ") + QString::fromUtf8(jsonData));
     QDataStream socketStream(serverSocket);
-    socketStream.setVersion(QDataStream::Qt_5_7);
+    socketStream.setVersion(serializerVersion);
     socketStream << jsonData;
 }
 
@@ -49,7 +50,7 @@ void ServerWorker::receiveJson()
 {
     QByteArray jsonData;
     QDataStream socketStream(serverSocket);
-    socketStream.setVersion(QDataStream::Qt_5_7);
+    socketStream.setVersion(serializerVersion);
     while(true) {
         socketStream.startTransaction();
         socketStream >> jsonData;
