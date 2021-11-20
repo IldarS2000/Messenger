@@ -3,10 +3,9 @@
 
 #include <QTcpServer>
 #include <QVector>
-
-class QThread;
-class ServerWorker;
-class QJsonObject;
+#include <QThread>
+#include <QJsonObject>
+#include "serverworker.h"
 
 class ChatServer : public QTcpServer
 {

@@ -2,12 +2,11 @@
 #define SERVERWINDOW_H
 
 #include <QWidget>
+#include "chatserver.h"
 
 namespace Ui {
     class ServerWindow;
 }
-
-class ChatServer;
 
 class ServerWindow : public QWidget
 {

@@ -4,8 +4,8 @@
 #include <QObject>
 #include <QTcpSocket>
 #include <QReadWriteLock>
+#include <QJsonObject>
 
-class QJsonObject;
 class ServerWorker : public QObject
 {
     Q_OBJECT

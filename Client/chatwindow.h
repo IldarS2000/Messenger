@@ -3,9 +3,8 @@
 
 #include <QWidget>
 #include <QAbstractSocket>
-
-class ChatClient;
-class QStandardItemModel;
+#include <QStandardItemModel>
+#include "chatclient.h"
 
 namespace Ui {
     class ChatWindow;

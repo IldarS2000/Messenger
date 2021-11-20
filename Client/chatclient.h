@@ -3,9 +3,8 @@
 
 #include <QObject>
 #include <QTcpSocket>
-
-class QHostAddress;
-class QJsonDocument;
+#include <QHostAddress>
+#include <QJsonDocument>
 
 class ChatClient : public QObject
 {
