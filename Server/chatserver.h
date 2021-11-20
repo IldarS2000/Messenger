@@ -32,7 +32,7 @@ public slots:
     void stopServer();
 
 private:
-    void jsonFromLoggedOut(ServerWorker* sender, const QJsonObject& doc);
+    void jsonFromLoggedOut(ServerWorker* sender, const QJsonObject& dataUnit);
     void jsonFromLoggedIn(ServerWorker* sender, const QJsonObject& doc);
     void sendJson(ServerWorker* destination, const QJsonObject& message);
 signals:

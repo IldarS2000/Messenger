@@ -1,7 +1,6 @@
 #include <QMessageBox>
 #include "serverwindow.h"
 #include "ui_serverwindow.h"
-#include "chatserver.h"
 #include "constants.h"
 
 ServerWindow::ServerWindow(QWidget* parent)
@@ -15,6 +14,7 @@ ServerWindow::ServerWindow(QWidget* parent)
 ServerWindow::~ServerWindow()
 {
     delete ui;
+    delete chatServer;
 }
 
 void ServerWindow::toggleStartServer()

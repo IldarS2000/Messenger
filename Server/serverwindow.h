@@ -16,12 +16,13 @@ public:
     explicit ServerWindow(QWidget* parent = nullptr);
     ~ServerWindow() override;
 
-private:
-    Ui::ServerWindow* ui;
-    ChatServer* chatServer;
 private slots:
     void toggleStartServer();
     void logMessage(const QString& msg);
+
+private:
+    Ui::ServerWindow* ui;
+    ChatServer* chatServer;
 };
 
 #endif // SERVERWINDOW_H

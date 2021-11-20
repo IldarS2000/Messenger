@@ -8,8 +8,8 @@ int main(int argc, char* argv[])
     qInstallMessageHandler(messageHandler);
     qInfo() << "--- launch server ---";
 
-    ServerWindow serverWin;
-    serverWin.show();
+    ServerWindow server;
+    server.show();
 
     return QApplication::exec();
 }
