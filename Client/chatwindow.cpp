@@ -4,6 +4,7 @@
 #include <QHostAddress>
 #include "chatwindow.h"
 #include "ui_window.h"
+#include "constants.h"
 
 ChatWindow::ChatWindow(QWidget* parent)
     : QWidget(parent), ui(new Ui::ChatWindow) // create the elements defined in the .ui file
@@ -51,7 +52,7 @@ void ChatWindow::attemptConnection()
     // disable the connect button to prevent the user clicking it again
     ui->connectButton->setEnabled(false);
     // tell the client to connect to the host using the port 1967
-    chatClient->connectToServer(QHostAddress(hostAddress), 1967);
+    chatClient->connectToServer(QHostAddress(hostAddress), PORT);
 }
 
 void ChatWindow::connectedToServer()
