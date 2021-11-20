@@ -17,6 +17,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt5::Widgets
         Qt5::Network)
 
+add_compile_definitions(QT_MESSAGELOGCONTEXT)
 set_target_properties(${PROJECT_NAME} PROPERTIES
         AUTOMOC ON
         AUTOUIC ON
