@@ -1,6 +1,5 @@
 #include <QDataStream>
 #include <QJsonDocument>
-#include <QJsonParseError>
 #include <QJsonObject>
 #include "serverworker.h"
 
@@ -11,7 +10,6 @@ ServerWorker::ServerWorker(QObject* parent) : QObject(parent), m_serverSocket(ne
     connect(m_serverSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
             &ServerWorker::error);
 }
-
 
 bool ServerWorker::setSocketDescriptor(qintptr socketDescriptor)
 {
