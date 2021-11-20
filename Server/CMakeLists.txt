@@ -15,7 +15,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 		Qt5::Widgets
 		Qt5::Network)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE QT_NO_CAST_FROM_ASCII)
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	AUTOMOC ON
 	AUTOUIC ON

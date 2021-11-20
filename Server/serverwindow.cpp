@@ -21,13 +21,13 @@ void ServerWindow::toggleStartServer()
     if (m_chatServer->isListening()) {
         m_chatServer->stopServer();
         ui->startStopButton->setText(tr("Start Server"));
-        logMessage(QStringLiteral("Server Stopped"));
+        logMessage("Server Stopped");
     } else {
         if (!m_chatServer->listen(QHostAddress::Any, 1967)) {
             QMessageBox::critical(this, tr("Error"), tr("Unable to start the server"));
             return;
         }
-        logMessage(QStringLiteral("Server Started"));
+        logMessage("Server Started");
         ui->startStopButton->setText(tr("Stop Server"));
     }
 }

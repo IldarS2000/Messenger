@@ -3,4 +3,3 @@ project(Messenger LANGUAGES CXX)
 
 add_subdirectory(Client)
 add_subdirectory(Server)
-

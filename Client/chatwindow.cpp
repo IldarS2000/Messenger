@@ -44,8 +44,8 @@ ChatWindow::~ChatWindow()
 void ChatWindow::attemptConnection()
 {
     // We ask the user for the address of the server, we use 127.0.0.1 (aka localhost) as default
-    const QString hostAddress = QInputDialog::getText(this, tr("Chose Server"), tr("Server Address"), QLineEdit::Normal,
-                                                      QStringLiteral("127.0.0.1"));
+    const QString hostAddress =
+            QInputDialog::getText(this, tr("Chose Server"), tr("Server Address"), QLineEdit::Normal, "127.0.0.1");
     if (hostAddress.isEmpty()) {
         return; // the user pressed cancel or typed nothing
     }
