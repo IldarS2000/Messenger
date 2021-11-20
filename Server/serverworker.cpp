@@ -12,7 +12,12 @@ ServerWorker::ServerWorker(QObject* parent) : QObject(parent), serverSocket(new 
             &ServerWorker::error);
 }
 
-bool ServerWorker::setSocketDescriptor(qintptr socketDescriptor)
+ServerWorker::~ServerWorker()
+{
+    delete serverSocket;
+}
+
+bool ServerWorker::setSocketDescriptor(const qintptr socketDescriptor)
 {
     return serverSocket->setSocketDescriptor(socketDescriptor);
 }
@@ -34,7 +39,7 @@ void ServerWorker::disconnectFromClient()
 QString ServerWorker::getUserName() const
 {
     userNameLock.lockForRead();
-    const QString result = userName;
+    QString result = userName;
     userNameLock.unlock();
     return result;
 }
@@ -51,17 +56,16 @@ void ServerWorker::receiveJson()
     QByteArray jsonData;
     QDataStream socketStream(serverSocket);
     socketStream.setVersion(serializerVersion);
-    while(true) {
+    while (true) {
         socketStream.startTransaction();
         socketStream >> jsonData;
         if (socketStream.commitTransaction()) {
-            QJsonParseError parseError = {0};
+            QJsonParseError parseError  = {0};
             const QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData, &parseError);
             if (parseError.error == QJsonParseError::NoError) {
                 if (jsonDoc.isObject()) {
                     emit jsonReceived(jsonDoc.object());
-                }
-                else {
+                } else {
                     emit logMessage(QLatin1String("Invalid message: ") + QString::fromUtf8(jsonData));
                 }
             } else {

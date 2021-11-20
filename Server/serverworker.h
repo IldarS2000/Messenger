@@ -12,6 +12,8 @@ class ServerWorker : public QObject
     Q_DISABLE_COPY(ServerWorker)
 public:
     explicit ServerWorker(QObject* parent = nullptr);
+    ~ServerWorker() override;
+
     virtual bool setSocketDescriptor(qintptr socketDescriptor);
     QString getUserName() const;
     void setUserName(const QString& name);
