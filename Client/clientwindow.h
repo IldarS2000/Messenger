@@ -20,7 +20,7 @@ public:
 
 private:
     Ui::ClientWindow* ui;
-    ClientCore* chatClient;
+    ClientCore* clientCore;
     QStandardItemModel* chatModel;
     QString lastUserName;
 private slots:

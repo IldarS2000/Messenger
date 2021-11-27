@@ -19,7 +19,7 @@
      <item>
       <widget class="QPushButton" name="connectButton">
        <property name="text">
-        <string>connect</string>
+        <string>connect group</string>
        </property>
       </widget>
      </item>
@@ -55,7 +55,7 @@
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>send</string>
+          <string>&gt;&gt;&gt;</string>
          </property>
          <property name="default">
           <bool>true</bool>
