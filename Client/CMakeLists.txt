@@ -10,7 +10,8 @@ find_package(Qt5 5.7 COMPONENTS
         REQUIRED)
 aux_source_directory(../Client SOURCES)
 aux_source_directory(../common SOURCES)
-add_executable(${PROJECT_NAME} ${SOURCES})
+
+add_executable(${PROJECT_NAME} ${SOURCES} resources/logo.rc)
 target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt5::Core
         Qt5::Gui
