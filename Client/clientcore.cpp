@@ -33,7 +33,7 @@ void ClientCore::login(const QString& userName)
         clientStream.setVersion(serializerVersion);
 
         QJsonObject dataUnit;
-        dataUnit["type"]     = "login";
+        dataUnit[DataUnit::TYPE]     = "login";
         dataUnit["username"] = userName;
         clientStream << QJsonDocument(dataUnit).toJson(QJsonDocument::Compact);
     }
@@ -48,7 +48,7 @@ void ClientCore::sendMessage(const QString& message)
     clientStream.setVersion(serializerVersion);
 
     QJsonObject dataUnit;
-    dataUnit["type"] = "message";
+    dataUnit[DataUnit::TYPE] = "message";
     dataUnit["text"] = message;
     clientStream << QJsonDocument(dataUnit).toJson();
 }
@@ -60,7 +60,7 @@ void ClientCore::disconnectFromHost()
 
 void ClientCore::jsonReceived(const QJsonObject& dataUnit)
 {
-    const QJsonValue typeVal = dataUnit.value(QLatin1String("type"));
+    const QJsonValue typeVal = dataUnit.value(QLatin1String(DataUnit::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }

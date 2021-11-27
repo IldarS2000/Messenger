@@ -41,7 +41,7 @@ ClientWindow::~ClientWindow()
 void ClientWindow::attemptConnection()
 {
     const QString hostAddress =
-            QInputDialog::getText(this, tr("chose server"), tr("server address"), QLineEdit::Normal, LOCAL_HOST);
+            QInputDialog::getText(this, tr("choose server"), tr("address"), QLineEdit::Normal, LOCAL_HOST);
     if (hostAddress.isEmpty()) {
         return;
     }
@@ -51,7 +51,7 @@ void ClientWindow::attemptConnection()
 
 void ClientWindow::connectedToServer()
 {
-    const QString newUsername = QInputDialog::getText(this, tr("chose username"), tr("username"));
+    const QString newUsername = QInputDialog::getText(this, tr("choose username"), tr("username"));
     if (newUsername.isEmpty()) {
         return clientCore->disconnectFromHost();
     }
@@ -144,6 +144,7 @@ void ClientWindow::userJoined(const QString& username)
     userEventImpl(username, "joined the group");
     ui->listWidget->addItem(username);
 }
+
 void ClientWindow::userLeft(const QString& username)
 {
     userEventImpl(username, "left the group");
@@ -151,7 +152,6 @@ void ClientWindow::userLeft(const QString& username)
     if (items.isEmpty()) {
         return;
     }
-
     delete items.at(0);
 }
 

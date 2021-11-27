@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QTimer>
 #include "servercore.h"
+#include "constants.h"
 
 ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
 {
@@ -82,7 +83,7 @@ void ServerCore::userDisconnected(ServerWorker* const sender, const int threadId
     const QString& userName = sender->getUserName();
     if (!userName.isEmpty()) {
         QJsonObject dataUnit;
-        dataUnit["type"]     = "userdisconnected";
+        dataUnit[DataUnit::TYPE]     = "userdisconnected";
         dataUnit["username"] = userName;
         broadcast(dataUnit, nullptr);
         emit logMessage(userName + QLatin1String(" disconnected"));
@@ -104,7 +105,7 @@ void ServerCore::stopServer()
 void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject& dataUnit)
 {
     Q_ASSERT(sender);
-    const QJsonValue typeVal = dataUnit.value(QLatin1String("type"));
+    const QJsonValue typeVal = dataUnit.value(QLatin1String(DataUnit::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }
@@ -125,7 +126,7 @@ void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject
         }
         if (worker->getUserName().compare(newUserName, Qt::CaseInsensitive) == 0) {
             QJsonObject message;
-            message["type"]    = "login";
+            message[DataUnit::TYPE]    = "login";
             message["success"] = false;
             message["reason"]  = "duplicate username";
             sendJson(sender, message);
@@ -134,11 +135,11 @@ void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject
     }
     sender->setUserName(newUserName);
     QJsonObject successMessage;
-    successMessage["type"]    = "login";
+    successMessage[DataUnit::TYPE]    = "login";
     successMessage["success"] = true;
     sendJson(sender, successMessage);
     QJsonObject connectedMessage;
-    connectedMessage["type"]     = "newuser";
+    connectedMessage[DataUnit::TYPE]     = "newuser";
     connectedMessage["username"] = newUserName;
     broadcast(connectedMessage, sender);
 }
@@ -146,7 +147,7 @@ void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject
 void ServerCore::jsonFromLoggedIn(ServerWorker* const sender, const QJsonObject& docObj)
 {
     Q_ASSERT(sender);
-    const QJsonValue typeVal = docObj.value(QLatin1String("type"));
+    const QJsonValue typeVal = docObj.value(QLatin1String(DataUnit::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }
@@ -162,7 +163,7 @@ void ServerCore::jsonFromLoggedIn(ServerWorker* const sender, const QJsonObject&
         return;
     }
     QJsonObject message;
-    message["type"]   = "message";
+    message[DataUnit::TYPE]   = "message";
     message["text"]   = text;
     message["sender"] = sender->getUserName();
     broadcast(message, sender);
