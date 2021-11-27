@@ -2,7 +2,7 @@
 #define SERVERWINDOW_H
 
 #include <QWidget>
-#include "chatserver.h"
+#include "servercore.h"
 
 namespace Ui {
     class ServerWindow;
@@ -22,7 +22,7 @@ private slots:
 
 private:
     Ui::ServerWindow* ui;
-    ChatServer* chatServer;
+    ServerCore* chatServer;
 };
 
 #endif // SERVERWINDOW_H

@@ -1,5 +1,5 @@
-#ifndef CHATSERVER_H
-#define CHATSERVER_H
+#ifndef SERVERCORE_H
+#define SERVERCORE_H
 
 #include <QTcpServer>
 #include <QVector>
@@ -7,13 +7,13 @@
 #include <QJsonObject>
 #include "serverworker.h"
 
-class ChatServer : public QTcpServer
+class ServerCore : public QTcpServer
 {
     Q_OBJECT
-    Q_DISABLE_COPY(ChatServer)
+    Q_DISABLE_COPY(ServerCore)
 public:
-    explicit ChatServer(QObject* parent = nullptr);
-    ~ChatServer() override;
+    explicit ServerCore(QObject* parent = nullptr);
+    ~ServerCore() override;
 
 protected:
     void incomingConnection(qintptr socketDescriptor) override;
@@ -40,4 +40,4 @@ signals:
     void stopAllClients();
 };
 
-#endif // CHATSERVER_H
+#endif // SERVERCORE_H

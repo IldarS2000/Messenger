@@ -3,15 +3,15 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTimer>
-#include "chatserver.h"
+#include "servercore.h"
 
-ChatServer::ChatServer(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
+ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
 {
     availableThreads.reserve(idealThreadCount);
     threadsLoad.reserve(idealThreadCount);
 }
 
-ChatServer::~ChatServer()
+ServerCore::~ServerCore()
 {
     for (QThread* singleThread : availableThreads) {
         singleThread->quit();
@@ -19,7 +19,7 @@ ChatServer::~ChatServer()
     }
 }
 
-void ChatServer::incomingConnection(const qintptr socketDescriptor)
+void ServerCore::incomingConnection(const qintptr socketDescriptor)
 {
     auto* worker = new ServerWorker;
     if (!worker->setSocketDescriptor(socketDescriptor)) {
@@ -43,18 +43,18 @@ void ChatServer::incomingConnection(const qintptr socketDescriptor)
     connect(worker, &ServerWorker::jsonReceived, this, [this, worker](auto&& placeholder) {
         jsonReceived(worker, std::forward<decltype(placeholder)>(placeholder));
     });
-    connect(this, &ChatServer::stopAllClients, worker, &ServerWorker::disconnectFromClient);
+    connect(this, &ServerCore::stopAllClients, worker, &ServerWorker::disconnectFromClient);
     clients.append(worker);
     emit logMessage("New client Connected");
 }
 
-void ChatServer::sendJson(ServerWorker* const destination, const QJsonObject& message)
+void ServerCore::sendJson(ServerWorker* const destination, const QJsonObject& message)
 {
     Q_ASSERT(destination);
     QTimer::singleShot(0, destination, [destination, message] { destination->sendJson(message); });
 }
 
-void ChatServer::broadcast(const QJsonObject& message, ServerWorker* const exclude)
+void ServerCore::broadcast(const QJsonObject& message, ServerWorker* const exclude)
 {
     for (ServerWorker* worker : clients) {
         Q_ASSERT(worker);
@@ -64,7 +64,7 @@ void ChatServer::broadcast(const QJsonObject& message, ServerWorker* const exclu
     }
 }
 
-void ChatServer::jsonReceived(ServerWorker* const sender, const QJsonObject& json)
+void ServerCore::jsonReceived(ServerWorker* const sender, const QJsonObject& json)
 {
     Q_ASSERT(sender);
     emit logMessage(QLatin1String("JSON received ") + QString::fromUtf8(QJsonDocument(json).toJson()));
@@ -75,7 +75,7 @@ void ChatServer::jsonReceived(ServerWorker* const sender, const QJsonObject& jso
     jsonFromLoggedIn(sender, json);
 }
 
-void ChatServer::userDisconnected(ServerWorker* const sender, const int threadIdx)
+void ServerCore::userDisconnected(ServerWorker* const sender, const int threadIdx)
 {
     --threadsLoad[threadIdx];
     clients.removeAll(sender);
@@ -90,18 +90,18 @@ void ChatServer::userDisconnected(ServerWorker* const sender, const int threadId
     sender->deleteLater();
 }
 
-void ChatServer::userError(ServerWorker* const sender)
+void ServerCore::userError(ServerWorker* const sender)
 {
     emit logMessage(QLatin1String("Error from ") + sender->getUserName());
 }
 
-void ChatServer::stopServer()
+void ServerCore::stopServer()
 {
     emit stopAllClients();
     close();
 }
 
-void ChatServer::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject& dataUnit)
+void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject& dataUnit)
 {
     Q_ASSERT(sender);
     const QJsonValue typeVal = dataUnit.value(QLatin1String("type"));
@@ -143,7 +143,7 @@ void ChatServer::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject
     broadcast(connectedMessage, sender);
 }
 
-void ChatServer::jsonFromLoggedIn(ServerWorker* const sender, const QJsonObject& docObj)
+void ServerCore::jsonFromLoggedIn(ServerWorker* const sender, const QJsonObject& docObj)
 {
     Q_ASSERT(sender);
     const QJsonValue typeVal = docObj.value(QLatin1String("type"));

@@ -4,11 +4,11 @@
 #include "constants.h"
 
 ServerWindow::ServerWindow(QWidget* parent)
-    : QWidget(parent), ui(new Ui::ServerWindow), chatServer(new ChatServer(this))
+    : QWidget(parent), ui(new Ui::ServerWindow), chatServer(new ServerCore(this))
 {
     ui->setupUi(this);
     connect(ui->startStopButton, &QPushButton::clicked, this, &ServerWindow::toggleStartServer);
-    connect(chatServer, &ChatServer::logMessage, this, &ServerWindow::logMessage);
+    connect(chatServer, &ServerCore::logMessage, this, &ServerWindow::logMessage);
 }
 
 ServerWindow::~ServerWindow()
