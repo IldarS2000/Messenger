@@ -22,7 +22,7 @@ private slots:
 
 private:
     Ui::ServerWindow* ui;
-    ServerCore* chatServer;
+    ServerCore* serverCore;
 };
 
 #endif // SERVERWINDOW_H
