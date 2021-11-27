@@ -1,5 +1,5 @@
-#ifndef CLIENTWINDOW_H
-#define CLIENTWINDOW_H
+#ifndef CLIENT_WINDOW_H
+#define CLIENT_WINDOW_H
 
 #include <QWidget>
 #include <QAbstractSocket>
@@ -40,4 +40,4 @@ private:
     void userEventImpl(const QString& username, const QString& event);
 };
 
-#endif // CLIENTWINDOW_H
+#endif // CLIENT_WINDOW_H

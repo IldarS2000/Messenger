@@ -1,5 +1,5 @@
-#ifndef SERVERWORKER_H
-#define SERVERWORKER_H
+#ifndef SERVER_WORKER_H
+#define SERVER_WORKER_H
 
 #include <QObject>
 #include <QTcpSocket>
@@ -34,4 +34,4 @@ private:
     mutable QReadWriteLock userNameLock;
 };
 
-#endif // SERVERWORKER_H
+#endif // SERVER_WORKER_H

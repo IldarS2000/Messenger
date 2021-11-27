@@ -1,5 +1,5 @@
-#ifndef CLIENTCORE_H
-#define CLIENTCORE_H
+#ifndef CLIENT_CORE_H
+#define CLIENT_CORE_H
 
 #include <QObject>
 #include <QTcpSocket>
@@ -38,4 +38,4 @@ private:
     void jsonReceived(const QJsonObject& dataUnit);
 };
 
-#endif // CLIENTCORE_H
+#endif // CLIENT_CORE_H

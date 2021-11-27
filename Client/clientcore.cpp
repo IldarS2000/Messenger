@@ -33,8 +33,8 @@ void ClientCore::login(const QString& userName)
         clientStream.setVersion(serializerVersion);
 
         QJsonObject dataUnit;
-        dataUnit[DataUnit::TYPE]     = "login";
-        dataUnit["username"] = userName;
+        dataUnit[Packet::Type::TYPE]     = Packet::Type::LOGIN;
+        dataUnit[Packet::Data::USERNAME] = userName;
         clientStream << QJsonDocument(dataUnit).toJson(QJsonDocument::Compact);
     }
 }
@@ -48,8 +48,8 @@ void ClientCore::sendMessage(const QString& message)
     clientStream.setVersion(serializerVersion);
 
     QJsonObject dataUnit;
-    dataUnit[DataUnit::TYPE] = "message";
-    dataUnit["text"] = message;
+    dataUnit[Packet::Type::TYPE] = Packet::Type::MESSAGE;
+    dataUnit[Packet::Data::TEXT] = message;
     clientStream << QJsonDocument(dataUnit).toJson();
 }
 
@@ -60,15 +60,15 @@ void ClientCore::disconnectFromHost()
 
 void ClientCore::jsonReceived(const QJsonObject& dataUnit)
 {
-    const QJsonValue typeVal = dataUnit.value(QLatin1String(DataUnit::TYPE));
+    const QJsonValue typeVal = dataUnit.value(QLatin1String(Packet::Type::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }
-    if (typeVal.toString().compare(QLatin1String("login"), Qt::CaseInsensitive) == 0) {
+    if (typeVal.toString().compare(QLatin1String(Packet::Type::LOGIN), Qt::CaseInsensitive) == 0) {
         if (logged) {
             return;
         }
-        const QJsonValue resultVal = dataUnit.value(QLatin1String("success"));
+        const QJsonValue resultVal = dataUnit.value(QLatin1String(Packet::Data::SUCCESS));
         if (resultVal.isNull() || !resultVal.isBool()) {
             return;
         }
@@ -77,26 +77,26 @@ void ClientCore::jsonReceived(const QJsonObject& dataUnit)
             emit loggedIn();
             return;
         }
-        const QJsonValue reasonVal = dataUnit.value(QLatin1String("reason"));
+        const QJsonValue reasonVal = dataUnit.value(QLatin1String(Packet::Data::REASON));
         emit loginError(reasonVal.toString());
-    } else if (typeVal.toString().compare(QLatin1String("message"), Qt::CaseInsensitive) == 0) {
-        const QJsonValue textVal = dataUnit.value(QLatin1String("text"));
+    } else if (typeVal.toString().compare(QLatin1String(Packet::Type::MESSAGE), Qt::CaseInsensitive) == 0) {
+        const QJsonValue textVal = dataUnit.value(QLatin1String(Packet::Data::TEXT));
         if (textVal.isNull() || !textVal.isString()) {
             return;
         }
-        const QJsonValue senderVal = dataUnit.value(QLatin1String("sender"));
+        const QJsonValue senderVal = dataUnit.value(QLatin1String(Packet::Data::SENDER));
         if (senderVal.isNull() || !senderVal.isString()) {
             return;
         }
         emit messageReceived(senderVal.toString(), textVal.toString());
-    } else if (typeVal.toString().compare(QLatin1String("newuser"), Qt::CaseInsensitive) == 0) {
-        const QJsonValue usernameVal = dataUnit.value(QLatin1String("username"));
+    } else if (typeVal.toString().compare(QLatin1String(Packet::Type::USER_JOINED), Qt::CaseInsensitive) == 0) {
+        const QJsonValue usernameVal = dataUnit.value(QLatin1String(Packet::Data::USERNAME));
         if (usernameVal.isNull() || !usernameVal.isString()) {
             return;
         }
         emit userJoined(usernameVal.toString());
-    } else if (typeVal.toString().compare(QLatin1String("userdisconnected"), Qt::CaseInsensitive) == 0) {
-        const QJsonValue usernameVal = dataUnit.value(QLatin1String("username"));
+    } else if (typeVal.toString().compare(QLatin1String(Packet::Type::USER_LEFT), Qt::CaseInsensitive) == 0) {
+        const QJsonValue usernameVal = dataUnit.value(QLatin1String(Packet::Data::USERNAME));
         if (usernameVal.isNull() || !usernameVal.isString()) {
             return;
         }

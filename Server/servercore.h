@@ -1,5 +1,5 @@
-#ifndef SERVERCORE_H
-#define SERVERCORE_H
+#ifndef SERVER_CORE_H
+#define SERVER_CORE_H
 
 #include <QTcpServer>
 #include <QVector>
@@ -40,4 +40,4 @@ signals:
     void stopAllClients();
 };
 
-#endif // SERVERCORE_H
+#endif // SERVER_CORE_H

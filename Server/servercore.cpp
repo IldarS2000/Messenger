@@ -83,8 +83,8 @@ void ServerCore::userDisconnected(ServerWorker* const sender, const int threadId
     const QString& userName = sender->getUserName();
     if (!userName.isEmpty()) {
         QJsonObject dataUnit;
-        dataUnit[DataUnit::TYPE]     = "userdisconnected";
-        dataUnit["username"] = userName;
+        dataUnit[Packet::Type::TYPE]     = Packet::Type::USER_LEFT;
+        dataUnit[Packet::Data::USERNAME] = userName;
         broadcast(dataUnit, nullptr);
         emit logMessage(userName + QLatin1String(" disconnected"));
     }
@@ -105,14 +105,14 @@ void ServerCore::stopServer()
 void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject& dataUnit)
 {
     Q_ASSERT(sender);
-    const QJsonValue typeVal = dataUnit.value(QLatin1String(DataUnit::TYPE));
+    const QJsonValue typeVal = dataUnit.value(QLatin1String(Packet::Type::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }
-    if (typeVal.toString().compare(QLatin1String("login"), Qt::CaseInsensitive) != 0) {
+    if (typeVal.toString().compare(QLatin1String(Packet::Type::LOGIN), Qt::CaseInsensitive) != 0) {
         return;
     }
-    const QJsonValue usernameVal = dataUnit.value(QLatin1String("username"));
+    const QJsonValue usernameVal = dataUnit.value(QLatin1String(Packet::Data::USERNAME));
     if (usernameVal.isNull() || !usernameVal.isString()) {
         return;
     }
@@ -126,35 +126,35 @@ void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject
         }
         if (worker->getUserName().compare(newUserName, Qt::CaseInsensitive) == 0) {
             QJsonObject message;
-            message[DataUnit::TYPE]    = "login";
-            message["success"] = false;
-            message["reason"]  = "duplicate username";
+            message[Packet::Type::TYPE]    = Packet::Type::LOGIN;
+            message[Packet::Data::SUCCESS] = false;
+            message[Packet::Data::REASON]  = "duplicate username";
             sendJson(sender, message);
             return;
         }
     }
     sender->setUserName(newUserName);
     QJsonObject successMessage;
-    successMessage[DataUnit::TYPE]    = "login";
-    successMessage["success"] = true;
+    successMessage[Packet::Type::TYPE]    = Packet::Type::LOGIN;
+    successMessage[Packet::Data::SUCCESS] = true;
     sendJson(sender, successMessage);
     QJsonObject connectedMessage;
-    connectedMessage[DataUnit::TYPE]     = "newuser";
-    connectedMessage["username"] = newUserName;
+    connectedMessage[Packet::Type::TYPE]     = Packet::Type::USER_JOINED;
+    connectedMessage[Packet::Data::USERNAME] = newUserName;
     broadcast(connectedMessage, sender);
 }
 
 void ServerCore::jsonFromLoggedIn(ServerWorker* const sender, const QJsonObject& docObj)
 {
     Q_ASSERT(sender);
-    const QJsonValue typeVal = docObj.value(QLatin1String(DataUnit::TYPE));
+    const QJsonValue typeVal = docObj.value(QLatin1String(Packet::Type::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }
-    if (typeVal.toString().compare(QLatin1String("message"), Qt::CaseInsensitive) != 0) {
+    if (typeVal.toString().compare(QLatin1String(Packet::Type::MESSAGE), Qt::CaseInsensitive) != 0) {
         return;
     }
-    const QJsonValue textVal = docObj.value(QLatin1String("text"));
+    const QJsonValue textVal = docObj.value(QLatin1String(Packet::Data::TEXT));
     if (textVal.isNull() || !textVal.isString()) {
         return;
     }
@@ -163,8 +163,8 @@ void ServerCore::jsonFromLoggedIn(ServerWorker* const sender, const QJsonObject&
         return;
     }
     QJsonObject message;
-    message[DataUnit::TYPE]   = "message";
-    message["text"]   = text;
-    message["sender"] = sender->getUserName();
+    message[Packet::Type::TYPE]   = Packet::Type::MESSAGE;
+    message[Packet::Data::TEXT]   = text;
+    message[Packet::Data::SENDER] = sender->getUserName();
     broadcast(message, sender);
 }

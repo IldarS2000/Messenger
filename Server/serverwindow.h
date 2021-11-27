@@ -1,5 +1,5 @@
-#ifndef SERVERWINDOW_H
-#define SERVERWINDOW_H
+#ifndef SERVER_WINDOW_H
+#define SERVER_WINDOW_H
 
 #include <QWidget>
 #include "servercore.h"
@@ -25,4 +25,4 @@ private:
     ServerCore* serverCore;
 };
 
-#endif // SERVERWINDOW_H
+#endif // SERVER_WINDOW_H
