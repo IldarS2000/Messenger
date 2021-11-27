@@ -1,18 +1,18 @@
-#ifndef CHATCLIENT_H
-#define CHATCLIENT_H
+#ifndef CLIENTCORE_H
+#define CLIENTCORE_H
 
 #include <QObject>
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <QJsonDocument>
 
-class ChatClient : public QObject
+class ClientCore : public QObject
 {
     Q_OBJECT
-    Q_DISABLE_COPY(ChatClient)
+    Q_DISABLE_COPY(ClientCore)
 public:
-    explicit ChatClient(QObject* parent = nullptr);
-    ~ChatClient() override;
+    explicit ClientCore(QObject* parent = nullptr);
+    ~ClientCore() override;
 public slots:
     void connectToServer(const QHostAddress& address, quint16 port);
     void login(const QString& userName);
@@ -38,4 +38,4 @@ private:
     void jsonReceived(const QJsonObject& dataUnit);
 };
 
-#endif // CHATCLIENT_H
+#endif // CLIENTCORE_H

@@ -2,31 +2,31 @@
 #include <QDataStream>
 #include <QJsonParseError>
 #include <QJsonObject>
-#include "chatclient.h"
+#include "clientcore.h"
 #include "constants.h"
 
-ChatClient::ChatClient(QObject* parent) : QObject(parent), clientSocket(new QTcpSocket(this)), logged(false)
+ClientCore::ClientCore(QObject* parent) : QObject(parent), clientSocket(new QTcpSocket(this)), logged(false)
 {
-    connect(clientSocket, &QTcpSocket::connected, this, &ChatClient::connected);
-    connect(clientSocket, &QTcpSocket::disconnected, this, &ChatClient::disconnected);
+    connect(clientSocket, &QTcpSocket::connected, this, &ClientCore::connected);
+    connect(clientSocket, &QTcpSocket::disconnected, this, &ClientCore::disconnected);
     connect(clientSocket, &QTcpSocket::disconnected, this, [this]() -> void { logged = false; });
 
-    connect(clientSocket, &QTcpSocket::readyRead, this, &ChatClient::onReadyRead);
+    connect(clientSocket, &QTcpSocket::readyRead, this, &ClientCore::onReadyRead);
     connect(clientSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
-            &ChatClient::error);
+            &ClientCore::error);
 }
 
-ChatClient::~ChatClient()
+ClientCore::~ClientCore()
 {
     delete clientSocket;
 }
 
-void ChatClient::connectToServer(const QHostAddress& address, const quint16 port)
+void ClientCore::connectToServer(const QHostAddress& address, const quint16 port)
 {
     clientSocket->connectToHost(address, port);
 }
 
-void ChatClient::login(const QString& userName)
+void ClientCore::login(const QString& userName)
 {
     if (clientSocket->state() == QAbstractSocket::ConnectedState) {
         QDataStream clientStream(clientSocket);
@@ -39,7 +39,7 @@ void ChatClient::login(const QString& userName)
     }
 }
 
-void ChatClient::sendMessage(const QString& message)
+void ClientCore::sendMessage(const QString& message)
 {
     if (message.isEmpty()) {
         return;
@@ -53,12 +53,12 @@ void ChatClient::sendMessage(const QString& message)
     clientStream << QJsonDocument(dataUnit).toJson();
 }
 
-void ChatClient::disconnectFromHost()
+void ClientCore::disconnectFromHost()
 {
     clientSocket->disconnectFromHost();
 }
 
-void ChatClient::jsonReceived(const QJsonObject& dataUnit)
+void ClientCore::jsonReceived(const QJsonObject& dataUnit)
 {
     const QJsonValue typeVal = dataUnit.value(QLatin1String("type"));
     if (typeVal.isNull() || !typeVal.isString()) {
@@ -104,7 +104,7 @@ void ChatClient::jsonReceived(const QJsonObject& dataUnit)
     }
 }
 
-void ChatClient::onReadyRead()
+void ClientCore::onReadyRead()
 {
     QByteArray jsonData;
     QDataStream socketStream(clientSocket);

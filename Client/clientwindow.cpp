@@ -7,7 +7,7 @@
 #include "constants.h"
 
 ClientWindow::ClientWindow(QWidget* parent)
-    : QWidget(parent), ui(new Ui::ClientWindow), chatClient(new ChatClient(this)),
+    : QWidget(parent), ui(new Ui::ClientWindow), chatClient(new ClientCore(this)),
       chatModel(new QStandardItemModel(this))
 {
     ui->setupUi(this);
@@ -16,14 +16,14 @@ ClientWindow::ClientWindow(QWidget* parent)
     ui->listWidget->setFocusPolicy(Qt::NoFocus);
 
     // handle signals from logic view of client
-    connect(chatClient, &ChatClient::connected, this, &ClientWindow::connectedToServer);
-    connect(chatClient, &ChatClient::loggedIn, this, &ClientWindow::loggedIn);
-    connect(chatClient, &ChatClient::loginError, this, &ClientWindow::loginFailed);
-    connect(chatClient, &ChatClient::messageReceived, this, &ClientWindow::messageReceived);
-    connect(chatClient, &ChatClient::disconnected, this, &ClientWindow::disconnectedFromServer);
-    connect(chatClient, &ChatClient::error, this, &ClientWindow::error);
-    connect(chatClient, &ChatClient::userJoined, this, &ClientWindow::userJoined);
-    connect(chatClient, &ChatClient::userLeft, this, &ClientWindow::userLeft);
+    connect(chatClient, &ClientCore::connected, this, &ClientWindow::connectedToServer);
+    connect(chatClient, &ClientCore::loggedIn, this, &ClientWindow::loggedIn);
+    connect(chatClient, &ClientCore::loginError, this, &ClientWindow::loginFailed);
+    connect(chatClient, &ClientCore::messageReceived, this, &ClientWindow::messageReceived);
+    connect(chatClient, &ClientCore::disconnected, this, &ClientWindow::disconnectedFromServer);
+    connect(chatClient, &ClientCore::error, this, &ClientWindow::error);
+    connect(chatClient, &ClientCore::userJoined, this, &ClientWindow::userJoined);
+    connect(chatClient, &ClientCore::userLeft, this, &ClientWindow::userLeft);
     // connection to server
     connect(ui->connectButton, &QPushButton::clicked, this, &ClientWindow::attemptConnection);
     // connections for send message

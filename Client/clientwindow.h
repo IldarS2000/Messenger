@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QAbstractSocket>
 #include <QStandardItemModel>
-#include "chatclient.h"
+#include "clientcore.h"
 
 namespace Ui {
     class ClientWindow;
@@ -20,7 +20,7 @@ public:
 
 private:
     Ui::ClientWindow* ui;
-    ChatClient* chatClient;
+    ClientCore* chatClient;
     QStandardItemModel* chatModel;
     QString lastUserName;
 private slots:
