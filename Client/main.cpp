@@ -1,5 +1,5 @@
 #include <QApplication>
-#include "chatwindow.h"
+#include "clientwindow.h"
 #include "utils.h"
 
 int main(int argc, char* argv[])
@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
     qInstallMessageHandler(messageHandler);
     qInfo() << "--- launch client ---";
 
-    ChatWindow window;
+    ClientWindow window;
     window.show();
 
     return QApplication::exec();

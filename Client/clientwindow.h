@@ -1,5 +1,5 @@
-#ifndef CHATWINDOW_H
-#define CHATWINDOW_H
+#ifndef CLIENTWINDOW_H
+#define CLIENTWINDOW_H
 
 #include <QWidget>
 #include <QAbstractSocket>
@@ -7,19 +7,19 @@
 #include "chatclient.h"
 
 namespace Ui {
-    class ChatWindow;
+    class ClientWindow;
 }
 
-class ChatWindow : public QWidget
+class ClientWindow : public QWidget
 {
     Q_OBJECT
-    Q_DISABLE_COPY(ChatWindow)
+    Q_DISABLE_COPY(ClientWindow)
 public:
-    explicit ChatWindow(QWidget* parent = nullptr);
-    ~ChatWindow() override;
+    explicit ClientWindow(QWidget* parent = nullptr);
+    ~ClientWindow() override;
 
 private:
-    Ui::ChatWindow* ui;
+    Ui::ClientWindow* ui;
     ChatClient* chatClient;
     QStandardItemModel* chatModel;
     QString lastUserName;
@@ -40,4 +40,4 @@ private:
     void userEventImpl(const QString& username, const QString& event);
 };
 
-#endif // CHATWINDOW_H
+#endif // CLIENTWINDOW_H

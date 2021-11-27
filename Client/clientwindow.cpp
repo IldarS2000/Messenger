@@ -2,12 +2,13 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QHostAddress>
-#include "chatwindow.h"
+#include "clientwindow.h"
 #include "ui_window.h"
 #include "constants.h"
 
-ChatWindow::ChatWindow(QWidget* parent)
-    : QWidget(parent), ui(new Ui::ChatWindow), chatClient(new ChatClient(this)), chatModel(new QStandardItemModel(this))
+ClientWindow::ClientWindow(QWidget* parent)
+    : QWidget(parent), ui(new Ui::ClientWindow), chatClient(new ChatClient(this)),
+      chatModel(new QStandardItemModel(this))
 {
     ui->setupUi(this);
     chatModel->insertColumn(0);
@@ -15,29 +16,29 @@ ChatWindow::ChatWindow(QWidget* parent)
     ui->listWidget->setFocusPolicy(Qt::NoFocus);
 
     // handle signals from logic view of client
-    connect(chatClient, &ChatClient::connected, this, &ChatWindow::connectedToServer);
-    connect(chatClient, &ChatClient::loggedIn, this, &ChatWindow::loggedIn);
-    connect(chatClient, &ChatClient::loginError, this, &ChatWindow::loginFailed);
-    connect(chatClient, &ChatClient::messageReceived, this, &ChatWindow::messageReceived);
-    connect(chatClient, &ChatClient::disconnected, this, &ChatWindow::disconnectedFromServer);
-    connect(chatClient, &ChatClient::error, this, &ChatWindow::error);
-    connect(chatClient, &ChatClient::userJoined, this, &ChatWindow::userJoined);
-    connect(chatClient, &ChatClient::userLeft, this, &ChatWindow::userLeft);
+    connect(chatClient, &ChatClient::connected, this, &ClientWindow::connectedToServer);
+    connect(chatClient, &ChatClient::loggedIn, this, &ClientWindow::loggedIn);
+    connect(chatClient, &ChatClient::loginError, this, &ClientWindow::loginFailed);
+    connect(chatClient, &ChatClient::messageReceived, this, &ClientWindow::messageReceived);
+    connect(chatClient, &ChatClient::disconnected, this, &ClientWindow::disconnectedFromServer);
+    connect(chatClient, &ChatClient::error, this, &ClientWindow::error);
+    connect(chatClient, &ChatClient::userJoined, this, &ClientWindow::userJoined);
+    connect(chatClient, &ChatClient::userLeft, this, &ClientWindow::userLeft);
     // connection to server
-    connect(ui->connectButton, &QPushButton::clicked, this, &ChatWindow::attemptConnection);
+    connect(ui->connectButton, &QPushButton::clicked, this, &ClientWindow::attemptConnection);
     // connections for send message
-    connect(ui->sendButton, &QPushButton::clicked, this, &ChatWindow::sendMessage);
-    connect(ui->messageEdit, &QLineEdit::returnPressed, this, &ChatWindow::sendMessage);
+    connect(ui->sendButton, &QPushButton::clicked, this, &ClientWindow::sendMessage);
+    connect(ui->messageEdit, &QLineEdit::returnPressed, this, &ClientWindow::sendMessage);
 }
 
-ChatWindow::~ChatWindow()
+ClientWindow::~ClientWindow()
 {
     delete ui;
     delete chatClient;
     delete chatModel;
 }
 
-void ChatWindow::attemptConnection()
+void ClientWindow::attemptConnection()
 {
     const QString hostAddress =
             QInputDialog::getText(this, tr("chose server"), tr("server address"), QLineEdit::Normal, LOCAL_HOST);
@@ -48,7 +49,7 @@ void ChatWindow::attemptConnection()
     chatClient->connectToServer(QHostAddress(hostAddress), PORT);
 }
 
-void ChatWindow::connectedToServer()
+void ClientWindow::connectedToServer()
 {
     const QString newUsername = QInputDialog::getText(this, tr("chose username"), tr("username"));
     if (newUsername.isEmpty()) {
@@ -57,12 +58,12 @@ void ChatWindow::connectedToServer()
     attemptLogin(newUsername);
 }
 
-void ChatWindow::attemptLogin(const QString& userName)
+void ClientWindow::attemptLogin(const QString& userName)
 {
     chatClient->login(userName);
 }
 
-void ChatWindow::loggedIn()
+void ClientWindow::loggedIn()
 {
     ui->sendButton->setEnabled(true);
     ui->messageEdit->setEnabled(true);
@@ -71,13 +72,13 @@ void ChatWindow::loggedIn()
     lastUserName.clear();
 }
 
-void ChatWindow::loginFailed(const QString& reason)
+void ClientWindow::loginFailed(const QString& reason)
 {
     QMessageBox::critical(this, tr("Error"), reason);
     connectedToServer();
 }
 
-void ChatWindow::messageReceived(const QString& sender, const QString& message)
+void ClientWindow::messageReceived(const QString& sender, const QString& message)
 {
     int newRow = chatModel->rowCount();
     if (lastUserName != sender) {
@@ -100,7 +101,7 @@ void ChatWindow::messageReceived(const QString& sender, const QString& message)
     ui->chatView->scrollToBottom();
 }
 
-void ChatWindow::sendMessage()
+void ClientWindow::sendMessage()
 {
     const QString message = ui->messageEdit->text();
     chatClient->sendMessage(message);
@@ -115,7 +116,7 @@ void ChatWindow::sendMessage()
     lastUserName.clear();
 }
 
-void ChatWindow::disconnectedFromServer()
+void ClientWindow::disconnectedFromServer()
 {
     QMessageBox::warning(this, tr("Disconnected"), tr("The host terminated the connection"));
 
@@ -126,7 +127,7 @@ void ChatWindow::disconnectedFromServer()
     lastUserName.clear();
 }
 
-void ChatWindow::userEventImpl(const QString& username, const QString& event)
+void ClientWindow::userEventImpl(const QString& username, const QString& event)
 {
     const int newRow = chatModel->rowCount();
     chatModel->insertRow(newRow);
@@ -138,12 +139,12 @@ void ChatWindow::userEventImpl(const QString& username, const QString& event)
     lastUserName.clear();
 }
 
-void ChatWindow::userJoined(const QString& username)
+void ClientWindow::userJoined(const QString& username)
 {
     userEventImpl(username, "joined the group");
     ui->listWidget->addItem(username);
 }
-void ChatWindow::userLeft(const QString& username)
+void ClientWindow::userLeft(const QString& username)
 {
     userEventImpl(username, "left the group");
     QList<QListWidgetItem*> items = ui->listWidget->findItems(username, Qt::MatchExactly);
@@ -154,7 +155,7 @@ void ChatWindow::userLeft(const QString& username)
     delete items.at(0);
 }
 
-void ChatWindow::error(const QAbstractSocket::SocketError socketError)
+void ClientWindow::error(const QAbstractSocket::SocketError socketError)
 {
     switch (socketError) {
         case QAbstractSocket::RemoteHostClosedError:
