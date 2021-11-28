@@ -23,8 +23,9 @@ private:
     ClientCore* clientCore;
     QStandardItemModel* chatModel;
     QString lastUserName;
-    static constexpr int MIN_WINDOW_WIDTH = 700;
-    static constexpr int MIN_WINDOW_HEIGHT = 500;
+    static constexpr int MIN_WINDOW_WIDTH     = 750;
+    static constexpr int MIN_WINDOW_HEIGHT    = 500;
+    static constexpr int MAX_MESSAGE_ROW_SIZE = 50;
 private slots:
     void attemptConnection();
     void connected();
@@ -40,7 +41,8 @@ private slots:
 
 private:
     static QStringList splitString(const QString& str, int rowSize);
-    void displayMessage(const QString& message, int rowCount, int alignMask);
+    static QStringList splitText(const QString& text);
+    void displayMessage(const QString& message, int lastRowNumber, int alignMask);
     void userEventImpl(const QString& username, const QString& event);
 };
 

@@ -2,6 +2,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QHostAddress>
+#include <QDateTime>
 #include "clientwindow.h"
 #include "ui_window.h"
 #include "constants.h"
@@ -94,16 +95,50 @@ QStringList ClientWindow::splitString(const QString& str, const int rowSize)
     return list;
 }
 
-void ClientWindow::displayMessage(const QString& message, const int rowCount, const int alignMask)
+QStringList ClientWindow::splitText(const QString& text)
 {
-    int newRow                     = rowCount;
-    const QStringList splitMessage = splitString(message, 32);
-    for (const auto& messagePeace : splitMessage) {
-        chatModel->insertRow(newRow);
-        chatModel->setData(chatModel->index(newRow, 0), messagePeace);
-        chatModel->setData(chatModel->index(newRow, 0), int(alignMask | Qt::AlignVCenter), Qt::TextAlignmentRole);
+    const QStringList words = text.split(QRegExp("[\r\n\t ]+"), QString::SkipEmptyParts);
+    const int wordsCount    = words.size();
+    QStringList rows;
+    rows.append("");
+    for (int i = 0, j = 0; i < wordsCount; ++i) {
+        if (words[i].size() > MAX_MESSAGE_ROW_SIZE - rows[j].size()) {
+            if (words[i].size() > MAX_MESSAGE_ROW_SIZE) {
+                QStringList bigWords = splitString(words[i], MAX_MESSAGE_ROW_SIZE);
+                for (const auto& bigWord : bigWords) {
+                    if (rows[j].isEmpty()) {
+                        rows[j] += bigWord + QString(" ");
+                    }
+                    rows.append(bigWord + QString(" "));
+                    ++j;
+                }
+            } else {
+                rows.append(words[i] + QString(" "));
+                ++j;
+            }
+        } else {
+            rows[j] += words[i] + QString(" ");
+        }
+    }
+    return rows;
+}
+
+void ClientWindow::displayMessage(const QString& message, const int lastRowNumber, const int alignMask)
+{
+    QStringList rows    = splitText(message);
+    const int rowsCount = rows.size();
+    int currentRow      = lastRowNumber;
+    const QString time  = QDateTime::currentDateTime().toString("hh:mm");
+    for (int i = 0; i < rowsCount; ++i) {
+        chatModel->insertRow(currentRow);
+        if (i == rowsCount - 1) {
+            chatModel->setData(chatModel->index(currentRow, 0), rows[i] + QString(" (") + time + QString(")"));
+        } else {
+            chatModel->setData(chatModel->index(currentRow, 0), rows[i]);
+        }
+        chatModel->setData(chatModel->index(currentRow, 0), int(alignMask | Qt::AlignVCenter), Qt::TextAlignmentRole);
         ui->chatView->scrollToBottom();
-        ++newRow;
+        ++currentRow;
     }
 }
 
@@ -117,7 +152,7 @@ void ClientWindow::messageReceived(const QString& sender, const QString& message
         boldFont.setBold(true);
 
         chatModel->insertRow(newRow);
-        chatModel->setData(chatModel->index(newRow, 0), sender + QLatin1Char(':'));
+        chatModel->setData(chatModel->index(newRow, 0), sender);
         chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter), Qt::TextAlignmentRole);
         chatModel->setData(chatModel->index(newRow, 0), boldFont, Qt::FontRole);
         ++newRow;
