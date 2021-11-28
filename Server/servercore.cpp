@@ -46,7 +46,7 @@ void ServerCore::incomingConnection(const qintptr socketDescriptor)
     });
     connect(this, &ServerCore::stopAllClients, worker, &ServerWorker::disconnectFromClient);
     clients.append(worker);
-    emit logMessage("New client Connected");
+    qInfo() << "new client connected";
 }
 
 void ServerCore::sendJson(ServerWorker* const destination, const QJsonObject& message)
@@ -68,7 +68,8 @@ void ServerCore::broadcast(const QJsonObject& message, ServerWorker* const exclu
 void ServerCore::jsonReceived(ServerWorker* const sender, const QJsonObject& json)
 {
     Q_ASSERT(sender);
-    emit logMessage(QLatin1String("JSON received ") + QString::fromUtf8(QJsonDocument(json).toJson()));
+    qInfo() << qPrintable("JSON received\n" + QString::fromUtf8(QJsonDocument(json).toJson(QJsonDocument::Indented)));
+
     const QString& userName = sender->getUserName();
     if (userName.isEmpty()) {
         return jsonFromLoggedOut(sender, json);
@@ -86,14 +87,14 @@ void ServerCore::userDisconnected(ServerWorker* const sender, const int threadId
         dataUnit[Packet::Type::TYPE]     = Packet::Type::USER_LEFT;
         dataUnit[Packet::Data::USERNAME] = userName;
         broadcast(dataUnit, nullptr);
-        emit logMessage(userName + QLatin1String(" disconnected"));
+        qInfo() << qPrintable(userName + QString(" disconnected"));
     }
     sender->deleteLater();
 }
 
 void ServerCore::userError(ServerWorker* const sender)
 {
-    emit logMessage(QLatin1String("Error from ") + sender->getUserName());
+    qWarning() << qPrintable(QString("error from ") + sender->getUserName());
 }
 
 void ServerCore::stopServer()

@@ -1,5 +1,5 @@
 #include <QApplication>
-#include "serverwindow.h"
+#include "servercontroller.h"
 #include "utils.h"
 
 int main(int argc, char* argv[])
@@ -8,8 +8,8 @@ int main(int argc, char* argv[])
     qInstallMessageHandler(messageHandler);
 
     qInfo() << "--- launch server ---";
-    ServerWindow server;
-    server.show();
+    ServerController server;
+    server.startServer();
 
     return QApplication::exec();
 }

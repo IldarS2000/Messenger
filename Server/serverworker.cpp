@@ -25,7 +25,7 @@ bool ServerWorker::setSocketDescriptor(const qintptr socketDescriptor)
 void ServerWorker::sendJson(const QJsonObject& json)
 {
     const QByteArray jsonData = QJsonDocument(json).toJson();
-    emit logMessage(QLatin1String("Sending to ") + getUserName() + QLatin1String(" - ") + QString::fromUtf8(jsonData));
+    qInfo() << qPrintable(QString("sending JSON to ") + getUserName() + QString("\n") + QString::fromUtf8(jsonData));
     QDataStream socketStream(serverSocket);
     socketStream.setVersion(serializerVersion);
     socketStream << jsonData;
@@ -66,10 +66,10 @@ void ServerWorker::receiveJson()
                 if (jsonDoc.isObject()) {
                     emit jsonReceived(jsonDoc.object());
                 } else {
-                    emit logMessage(QLatin1String("Invalid message: ") + QString::fromUtf8(jsonData));
+                    qInfo() << qPrintable(QString("invalid message: ") + QString::fromUtf8(jsonData));
                 }
             } else {
-                emit logMessage(QLatin1String("Invalid message: ") + QString::fromUtf8(jsonData));
+                qInfo() << qPrintable(QString("invalid message: ") + QString::fromUtf8(jsonData));
             }
         } else {
             break;
