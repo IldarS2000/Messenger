@@ -41,9 +41,6 @@ void ClientCore::login(const QString& userName)
 
 void ClientCore::sendMessage(const QString& message)
 {
-    if (message.isEmpty()) {
-        return;
-    }
     QDataStream clientStream(clientSocket);
     clientStream.setVersion(serializerVersion);
 

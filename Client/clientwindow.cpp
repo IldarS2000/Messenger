@@ -13,7 +13,7 @@ ClientWindow::ClientWindow(QWidget* parent)
 {
     ui->setupUi(this);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    setMinimumSize(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT);
+    setMinimumSize(minWindowWidth, minWindowHeight);
 
     chatModel->insertColumn(0);
     ui->chatView->setModel(chatModel);
@@ -56,7 +56,7 @@ void ClientWindow::attemptConnection()
 void ClientWindow::connected()
 {
     const QString newUsername = QInputDialog::getText(this, tr("choose username"), tr("username"));
-    if (newUsername.isEmpty()) {
+    if (newUsername.isEmpty() || newUsername.size() > maximumUserNameSize) {
         return clientCore->disconnectFromHost();
     }
     attemptLogin(newUsername);
@@ -102,9 +102,9 @@ QStringList ClientWindow::splitText(const QString& text)
     QStringList rows;
     rows.append("");
     for (int i = 0, j = 0; i < wordsCount; ++i) {
-        if (words[i].size() > MAX_MESSAGE_ROW_SIZE - rows[j].size()) {
-            if (words[i].size() > MAX_MESSAGE_ROW_SIZE) {
-                QStringList bigWords = splitString(words[i], MAX_MESSAGE_ROW_SIZE);
+        if (words[i].size() > maxMessageRowSize - rows[j].size()) {
+            if (words[i].size() > maxMessageRowSize) {
+                QStringList bigWords = splitString(words[i], maxMessageRowSize);
                 for (const auto& bigWord : bigWords) {
                     if (rows[j].isEmpty()) {
                         rows[j] += bigWord + QString(" ");
@@ -144,29 +144,33 @@ void ClientWindow::displayMessage(const QString& message, const int lastRowNumbe
 
 void ClientWindow::messageReceived(const QString& sender, const QString& message)
 {
-    int newRow = chatModel->rowCount();
+    int currentRow = chatModel->rowCount();
     if (lastUserName != sender) {
         lastUserName = sender;
 
         QFont boldFont;
         boldFont.setBold(true);
 
-        chatModel->insertRow(newRow);
-        chatModel->setData(chatModel->index(newRow, 0), sender);
-        chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter), Qt::TextAlignmentRole);
-        chatModel->setData(chatModel->index(newRow, 0), boldFont, Qt::FontRole);
-        ++newRow;
+        chatModel->insertRow(currentRow);
+        chatModel->setData(chatModel->index(currentRow, 0), sender);
+        chatModel->setData(chatModel->index(currentRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter),
+                           Qt::TextAlignmentRole);
+        chatModel->setData(chatModel->index(currentRow, 0), boldFont, Qt::FontRole);
+        ++currentRow;
     }
-    displayMessage(message, newRow, Qt::AlignLeft);
+    displayMessage(message, currentRow, Qt::AlignLeft);
 }
 
 void ClientWindow::sendMessage()
 {
     const QString message = ui->messageEdit->text();
+    if (message.isEmpty() || message.size() > maximumMessageSize) {
+        return;
+    }
     clientCore->sendMessage(message);
 
-    int newRow = chatModel->rowCount();
-    displayMessage(message, newRow, Qt::AlignRight);
+    int currentRow = chatModel->rowCount();
+    displayMessage(message, currentRow, Qt::AlignRight);
 
     ui->messageEdit->clear();
     ui->chatView->scrollToBottom();

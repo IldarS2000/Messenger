@@ -23,9 +23,11 @@ private:
     ClientCore* clientCore;
     QStandardItemModel* chatModel;
     QString lastUserName;
-    static constexpr int MIN_WINDOW_WIDTH     = 750;
-    static constexpr int MIN_WINDOW_HEIGHT    = 500;
-    static constexpr int MAX_MESSAGE_ROW_SIZE = 50;
+    static constexpr int minWindowWidth      = 750;
+    static constexpr int minWindowHeight     = 500;
+    static constexpr int maxMessageRowSize   = 50;
+    static constexpr int maximumMessageSize  = 2048;
+    static constexpr int maximumUserNameSize = 32;
 private slots:
     void attemptConnection();
     void connected();
