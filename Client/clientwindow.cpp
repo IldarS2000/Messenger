@@ -11,6 +11,9 @@ ClientWindow::ClientWindow(QWidget* parent)
       chatModel(new QStandardItemModel(this))
 {
     ui->setupUi(this);
+    setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    setMinimumSize(MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT);
+
     chatModel->insertColumn(0);
     ui->chatView->setModel(chatModel);
     ui->listWidget->setFocusPolicy(Qt::NoFocus);
@@ -78,6 +81,32 @@ void ClientWindow::loginError(const QString& reason)
     connected();
 }
 
+QStringList ClientWindow::splitString(const QString& str, const int rowSize)
+{
+    QString temp = str;
+    QStringList list;
+    list.reserve(temp.size() / rowSize + 1);
+
+    while (!temp.isEmpty()) {
+        list.append(temp.left(rowSize).trimmed());
+        temp.remove(0, rowSize);
+    }
+    return list;
+}
+
+void ClientWindow::displayMessage(const QString& message, const int rowCount, const int alignMask)
+{
+    int newRow                     = rowCount;
+    const QStringList splitMessage = splitString(message, 32);
+    for (const auto& messagePeace : splitMessage) {
+        chatModel->insertRow(newRow);
+        chatModel->setData(chatModel->index(newRow, 0), messagePeace);
+        chatModel->setData(chatModel->index(newRow, 0), int(alignMask | Qt::AlignVCenter), Qt::TextAlignmentRole);
+        ui->chatView->scrollToBottom();
+        ++newRow;
+    }
+}
+
 void ClientWindow::messageReceived(const QString& sender, const QString& message)
 {
     int newRow = chatModel->rowCount();
@@ -87,18 +116,13 @@ void ClientWindow::messageReceived(const QString& sender, const QString& message
         QFont boldFont;
         boldFont.setBold(true);
 
-        chatModel->insertRows(newRow, 2);
+        chatModel->insertRow(newRow);
         chatModel->setData(chatModel->index(newRow, 0), sender + QLatin1Char(':'));
-        chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter),
-                             Qt::TextAlignmentRole);
+        chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter), Qt::TextAlignmentRole);
         chatModel->setData(chatModel->index(newRow, 0), boldFont, Qt::FontRole);
         ++newRow;
-    } else {
-        chatModel->insertRow(newRow);
     }
-    chatModel->setData(chatModel->index(newRow, 0), message);
-    chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter), Qt::TextAlignmentRole);
-    ui->chatView->scrollToBottom();
+    displayMessage(message, newRow, Qt::AlignLeft);
 }
 
 void ClientWindow::sendMessage()
@@ -106,10 +130,8 @@ void ClientWindow::sendMessage()
     const QString message = ui->messageEdit->text();
     clientCore->sendMessage(message);
 
-    const int newRow = chatModel->rowCount();
-    chatModel->insertRow(newRow);
-    chatModel->setData(chatModel->index(newRow, 0), message);
-    chatModel->setData(chatModel->index(newRow, 0), int(Qt::AlignRight | Qt::AlignVCenter), Qt::TextAlignmentRole);
+    int newRow = chatModel->rowCount();
+    displayMessage(message, newRow, Qt::AlignRight);
 
     ui->messageEdit->clear();
     ui->chatView->scrollToBottom();

@@ -23,6 +23,8 @@ private:
     ClientCore* clientCore;
     QStandardItemModel* chatModel;
     QString lastUserName;
+    static constexpr int MIN_WINDOW_WIDTH = 700;
+    static constexpr int MIN_WINDOW_HEIGHT = 500;
 private slots:
     void attemptConnection();
     void connected();
@@ -37,6 +39,8 @@ private slots:
     void error(QAbstractSocket::SocketError socketError);
 
 private:
+    static QStringList splitString(const QString& str, int rowSize);
+    void displayMessage(const QString& message, int rowCount, int alignMask);
     void userEventImpl(const QString& username, const QString& event);
 };
 
