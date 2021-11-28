@@ -29,4 +29,5 @@ void messageHandler(const QtMsgType type, const QMessageLogContext& context, con
             break;
     }
     out << ' ' << message << '\n';
+    out.flush();
 }
