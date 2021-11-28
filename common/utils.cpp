@@ -28,6 +28,6 @@ void messageHandler(const QtMsgType type, const QMessageLogContext& context, con
             out << "[FATAL]";
             break;
     }
-    out << ' ' << message << '\n';
+    out << ' ' << message.trimmed() << '\n';
     out.flush();
 }

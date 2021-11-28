@@ -15,7 +15,7 @@ void ServerController::startServer()
         qInfo() << "server stopped";
     } else {
         if (!serverCore->listen(QHostAddress::Any, PORT)) {
-            qWarning() << "unable to start the server";
+            qCritical() << "unable to start the server";
             return;
         }
         qInfo() << "server started";

@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
     QApplication app(argc, argv);
     qInstallMessageHandler(messageHandler);
 
-    qInfo() << "--- launch server ---";
+    qInfo() << "--- start server ---";
     ServerController server;
     server.startServer();
 
