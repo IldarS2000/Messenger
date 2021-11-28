@@ -1,50 +1,32 @@
 #include <QDebug>
 #include <QDateTime>
-#include <string>
+#include <QFileInfo>
 
-static std::string parseFileName(const std::string& filePath)
+void messageHandler(const QtMsgType type, const QMessageLogContext& context, const QString& message)
 {
-#ifdef _WIN32
-    std::string::size_type filePos = filePath.rfind('\\');
-#else
-    std::string::size_type filePos = filePath.rfind('/');
-#endif
-    if (filePos != std::string::npos) {
-        ++filePos;
-    } else {
-        filePos = 0;
-    }
-    return filePath.substr(filePos);
-}
+    QTextStream out(stdout);
+    out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") << "]" << ' ';
 
-void messageHandler(const QtMsgType type, const QMessageLogContext& context, const QString& msg)
-{
-    QString dateTime = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-    QByteArray localMsg = msg.toLocal8Bit();
-
-    std::string filePath = context.file ? context.file : "";
-    std::string fileName = parseFileName(filePath);
-
-    const char* const function = context.function ? context.function : "";
-    std::string level;
-
+    const QFileInfo file(context.file);
     switch (type) {
-        case QtDebugMsg:
-            level = "DEBUG";
+        case QtDebugMsg: {
+            out << "[DEBUG]" << ' ';
+            out << "[" << file.fileName() << "]" << ' ';
+            out << "[" << context.function << ":" << context.line << "]";
             break;
+        }
         case QtInfoMsg:
-            level = "INFO";
+            out << "[INFO]";
             break;
         case QtWarningMsg:
-            level = "WARNING";
+            out << "[WARNING]";
             break;
         case QtCriticalMsg:
-            level = "CRITICAL";
+            out << "[CRITICAL]";
             break;
         case QtFatalMsg:
-            level = "FATAL";
+            out << "[FATAL]";
             break;
     }
-    fprintf(stdout, "[%s] [%s] [%s] [%s:%u] %s\n", dateTime.toStdString().c_str(), level.c_str(), fileName.c_str(),
-            function, context.line, localMsg.constData());
+    out << ' ' << message << '\n';
 }
