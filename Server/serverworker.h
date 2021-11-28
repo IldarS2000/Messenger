@@ -17,13 +17,13 @@ public:
     virtual bool setSocketDescriptor(qintptr socketDescriptor);
     QString getUserName() const;
     void setUserName(const QString& name);
-    void sendJson(const QJsonObject& json);
+    void sendPacket(const QJsonObject& packet);
 public slots:
     void disconnectFromClient();
 private slots:
-    void receiveJson();
+    void onReadyRead();
 signals:
-    void jsonReceived(const QJsonObject& jsonDoc);
+    void packetReceived(const QJsonObject& packet);
     void disconnectedFromClient();
     void error();
 

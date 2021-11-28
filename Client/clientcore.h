@@ -40,7 +40,7 @@ private:
     void handleMessagePacket(const QJsonObject& packet);
     void handleUserJoinedPacket(const QJsonObject& packet);
     void handleUserLeftPacket(const QJsonObject& packet);
-    static bool isEqualPacketType(const QJsonValue& jsonType, const char* const strType);
+    static bool isEqualPacketType(const QJsonValue& jsonType, const char* strType);
 };
 
 #endif // CLIENT_CORE_H

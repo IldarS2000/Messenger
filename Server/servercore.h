@@ -24,17 +24,18 @@ private:
     QVector<int> threadsLoad;
     QVector<ServerWorker*> clients;
 private slots:
-    void broadcast(const QJsonObject& message, ServerWorker* exclude);
-    void jsonReceived(ServerWorker* sender, const QJsonObject& doc);
+    void broadcast(const QJsonObject& packet, ServerWorker* exclude);
+    void packetReceived(ServerWorker* sender, const QJsonObject& packet);
     void userDisconnected(ServerWorker* sender, int threadIdx);
-    void userError(ServerWorker* sender);
+    static void userError(ServerWorker* sender);
 public slots:
     void stopServer();
 
 private:
-    void jsonFromLoggedOut(ServerWorker* sender, const QJsonObject& dataUnit);
-    void jsonFromLoggedIn(ServerWorker* sender, const QJsonObject& doc);
-    void sendJson(ServerWorker* destination, const QJsonObject& message);
+    void packetFromLoggedOut(ServerWorker* sender, const QJsonObject& packet);
+    void packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet);
+    static void sendPacket(ServerWorker* destination, const QJsonObject& packet);
+    static bool isEqualPacketType(const QJsonValue& jsonType, const char* strType);
 signals:
     void stopAllClients();
 };

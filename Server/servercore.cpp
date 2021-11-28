@@ -27,54 +27,58 @@ void ServerCore::incomingConnection(const qintptr socketDescriptor)
         worker->deleteLater();
         return;
     }
+
     int threadIdx = availableThreads.size();
     if (threadIdx < idealThreadCount) {
         availableThreads.append(new QThread(this));
         threadsLoad.append(1);
         availableThreads.last()->start();
     } else {
-        threadIdx = std::distance(threadsLoad.cbegin(), std::min_element(threadsLoad.cbegin(), threadsLoad.cend()));
+        threadIdx = static_cast<int>(
+                std::distance(threadsLoad.begin(), std::min_element(threadsLoad.begin(), threadsLoad.end())));
         ++threadsLoad[threadIdx];
     }
+
     worker->moveToThread(availableThreads.at(threadIdx));
     connect(availableThreads.at(threadIdx), &QThread::finished, worker, &QObject::deleteLater);
     connect(worker, &ServerWorker::disconnectedFromClient, this,
             [this, worker, threadIdx] { userDisconnected(worker, threadIdx); });
-    connect(worker, &ServerWorker::error, this, [this, worker] { userError(worker); });
-    connect(worker, &ServerWorker::jsonReceived, this, [this, worker](auto&& placeholder) {
-        jsonReceived(worker, std::forward<decltype(placeholder)>(placeholder));
+
+    connect(worker, &ServerWorker::error, this, [worker] { userError(worker); });
+    connect(worker, &ServerWorker::packetReceived, this, [this, worker](auto&& placeholder) {
+        packetReceived(worker, std::forward<decltype(placeholder)>(placeholder));
     });
     connect(this, &ServerCore::stopAllClients, worker, &ServerWorker::disconnectFromClient);
     clients.append(worker);
     qInfo() << "new client connected";
 }
 
-void ServerCore::sendJson(ServerWorker* const destination, const QJsonObject& message)
+void ServerCore::sendPacket(ServerWorker* const destination, const QJsonObject& packet)
 {
     Q_ASSERT(destination);
-    QTimer::singleShot(0, destination, [destination, message] { destination->sendJson(message); });
+    QTimer::singleShot(0, destination, [destination, packet] { destination->sendPacket(packet); });
 }
 
-void ServerCore::broadcast(const QJsonObject& message, ServerWorker* const exclude)
+void ServerCore::broadcast(const QJsonObject& packet, ServerWorker* const exclude)
 {
     for (ServerWorker* worker : clients) {
         Q_ASSERT(worker);
         if (worker != exclude) {
-            sendJson(worker, message);
+            sendPacket(worker, packet);
         }
     }
 }
 
-void ServerCore::jsonReceived(ServerWorker* const sender, const QJsonObject& json)
+void ServerCore::packetReceived(ServerWorker* sender, const QJsonObject& packet)
 {
     Q_ASSERT(sender);
-    qInfo() << qPrintable("JSON received\n" + QString::fromUtf8(QJsonDocument(json).toJson(QJsonDocument::Indented)));
+    qInfo() << qPrintable("JSON received\n" + QString::fromUtf8(QJsonDocument(packet).toJson(QJsonDocument::Indented)));
 
     const QString& userName = sender->getUserName();
     if (userName.isEmpty()) {
-        return jsonFromLoggedOut(sender, json);
+        return packetFromLoggedOut(sender, packet);
     }
-    jsonFromLoggedIn(sender, json);
+    packetFromLoggedIn(sender, packet);
 }
 
 void ServerCore::userDisconnected(ServerWorker* const sender, const int threadIdx)
@@ -83,10 +87,10 @@ void ServerCore::userDisconnected(ServerWorker* const sender, const int threadId
     clients.removeAll(sender);
     const QString& userName = sender->getUserName();
     if (!userName.isEmpty()) {
-        QJsonObject dataUnit;
-        dataUnit[Packet::Type::TYPE]     = Packet::Type::USER_LEFT;
-        dataUnit[Packet::Data::USERNAME] = userName;
-        broadcast(dataUnit, nullptr);
+        QJsonObject packet;
+        packet[Packet::Type::TYPE]     = Packet::Type::USER_LEFT;
+        packet[Packet::Data::USERNAME] = userName;
+        broadcast(packet, nullptr);
         qInfo() << qPrintable(userName + QString(" disconnected"));
     }
     sender->deleteLater();
@@ -103,17 +107,23 @@ void ServerCore::stopServer()
     close();
 }
 
-void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject& dataUnit)
+bool ServerCore::isEqualPacketType(const QJsonValue& jsonType, const char* const strType)
+{
+    return jsonType.toString().compare(QLatin1String(strType), Qt::CaseInsensitive) == 0;
+}
+
+void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObject& packet)
 {
     Q_ASSERT(sender);
-    const QJsonValue typeVal = dataUnit.value(QLatin1String(Packet::Type::TYPE));
+    const QJsonValue typeVal = packet.value(QLatin1String(Packet::Type::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }
-    if (typeVal.toString().compare(QLatin1String(Packet::Type::LOGIN), Qt::CaseInsensitive) != 0) {
+    if (!isEqualPacketType(typeVal, Packet::Type::LOGIN)) {
         return;
     }
-    const QJsonValue usernameVal = dataUnit.value(QLatin1String(Packet::Data::USERNAME));
+
+    const QJsonValue usernameVal = packet.value(QLatin1String(Packet::Data::USERNAME));
     if (usernameVal.isNull() || !usernameVal.isString()) {
         return;
     }
@@ -121,41 +131,45 @@ void ServerCore::jsonFromLoggedOut(ServerWorker* const sender, const QJsonObject
     if (newUserName.isEmpty()) {
         return;
     }
+
     for (ServerWorker* worker : qAsConst(clients)) {
         if (worker == sender) {
             continue;
         }
         if (worker->getUserName().compare(newUserName, Qt::CaseInsensitive) == 0) {
-            QJsonObject message;
-            message[Packet::Type::TYPE]    = Packet::Type::LOGIN;
-            message[Packet::Data::SUCCESS] = false;
-            message[Packet::Data::REASON]  = "duplicate username";
-            sendJson(sender, message);
+            QJsonObject errorPacket;
+            errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
+            errorPacket[Packet::Data::SUCCESS] = false;
+            errorPacket[Packet::Data::REASON]  = "duplicate username";
+            sendPacket(sender, errorPacket);
             return;
         }
     }
+
     sender->setUserName(newUserName);
-    QJsonObject successMessage;
-    successMessage[Packet::Type::TYPE]    = Packet::Type::LOGIN;
-    successMessage[Packet::Data::SUCCESS] = true;
-    sendJson(sender, successMessage);
-    QJsonObject connectedMessage;
-    connectedMessage[Packet::Type::TYPE]     = Packet::Type::USER_JOINED;
-    connectedMessage[Packet::Data::USERNAME] = newUserName;
-    broadcast(connectedMessage, sender);
+    QJsonObject successPacket;
+    successPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
+    successPacket[Packet::Data::SUCCESS] = true;
+    sendPacket(sender, successPacket);
+
+    QJsonObject connectedBroadcastPacket;
+    connectedBroadcastPacket[Packet::Type::TYPE]     = Packet::Type::USER_JOINED;
+    connectedBroadcastPacket[Packet::Data::USERNAME] = newUserName;
+    broadcast(connectedBroadcastPacket, sender);
 }
 
-void ServerCore::jsonFromLoggedIn(ServerWorker* const sender, const QJsonObject& docObj)
+void ServerCore::packetFromLoggedIn(ServerWorker* const sender, const QJsonObject& packet)
 {
     Q_ASSERT(sender);
-    const QJsonValue typeVal = docObj.value(QLatin1String(Packet::Type::TYPE));
+    const QJsonValue typeVal = packet.value(QLatin1String(Packet::Type::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }
-    if (typeVal.toString().compare(QLatin1String(Packet::Type::MESSAGE), Qt::CaseInsensitive) != 0) {
+    if (!isEqualPacketType(typeVal, Packet::Type::MESSAGE)) {
         return;
     }
-    const QJsonValue textVal = docObj.value(QLatin1String(Packet::Data::TEXT));
+
+    const QJsonValue textVal = packet.value(QLatin1String(Packet::Data::TEXT));
     if (textVal.isNull() || !textVal.isString()) {
         return;
     }
@@ -163,9 +177,10 @@ void ServerCore::jsonFromLoggedIn(ServerWorker* const sender, const QJsonObject&
     if (text.isEmpty()) {
         return;
     }
-    QJsonObject message;
-    message[Packet::Type::TYPE]   = Packet::Type::MESSAGE;
-    message[Packet::Data::TEXT]   = text;
-    message[Packet::Data::SENDER] = sender->getUserName();
-    broadcast(message, sender);
+
+    QJsonObject broadcastPacket;
+    broadcastPacket[Packet::Type::TYPE]   = Packet::Type::MESSAGE;
+    broadcastPacket[Packet::Data::TEXT]   = text;
+    broadcastPacket[Packet::Data::SENDER] = sender->getUserName();
+    broadcast(broadcastPacket, sender);
 }

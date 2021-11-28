@@ -6,7 +6,7 @@
 
 ServerWorker::ServerWorker(QObject* parent) : QObject(parent), serverSocket(new QTcpSocket(this))
 {
-    connect(serverSocket, &QTcpSocket::readyRead, this, &ServerWorker::receiveJson);
+    connect(serverSocket, &QTcpSocket::readyRead, this, &ServerWorker::onReadyRead);
     connect(serverSocket, &QTcpSocket::disconnected, this, &ServerWorker::disconnectedFromClient);
     connect(serverSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
             &ServerWorker::error);
@@ -22,10 +22,11 @@ bool ServerWorker::setSocketDescriptor(const qintptr socketDescriptor)
     return serverSocket->setSocketDescriptor(socketDescriptor);
 }
 
-void ServerWorker::sendJson(const QJsonObject& json)
+void ServerWorker::sendPacket(const QJsonObject& packet)
 {
-    const QByteArray jsonData = QJsonDocument(json).toJson();
+    const QByteArray jsonData = QJsonDocument(packet).toJson();
     qInfo() << qPrintable(QString("sending JSON to ") + getUserName() + QString("\n") + QString::fromUtf8(jsonData));
+
     QDataStream socketStream(serverSocket);
     socketStream.setVersion(serializerVersion);
     socketStream << jsonData;
@@ -39,7 +40,7 @@ void ServerWorker::disconnectFromClient()
 QString ServerWorker::getUserName() const
 {
     userNameLock.lockForRead();
-    const QString result = userName;
+    QString result = userName;
     userNameLock.unlock();
     return result;
 }
@@ -51,7 +52,7 @@ void ServerWorker::setUserName(const QString& name)
     userNameLock.unlock();
 }
 
-void ServerWorker::receiveJson()
+void ServerWorker::onReadyRead()
 {
     QByteArray jsonData;
     QDataStream socketStream(serverSocket);
@@ -64,7 +65,7 @@ void ServerWorker::receiveJson()
             const QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData, &parseError);
             if (parseError.error == QJsonParseError::NoError) {
                 if (jsonDoc.isObject()) {
-                    emit jsonReceived(jsonDoc.object());
+                    emit packetReceived(jsonDoc.object());
                 } else {
                     qInfo() << qPrintable(QString("invalid message: ") + QString::fromUtf8(jsonData));
                 }
