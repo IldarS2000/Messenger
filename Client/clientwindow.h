@@ -25,13 +25,13 @@ private:
     QString lastUserName;
 private slots:
     void attemptConnection();
-    void connectedToServer();
+    void connected();
     void attemptLogin(const QString& userName);
     void loggedIn();
-    void loginFailed(const QString& reason);
+    void loginError(const QString& reason);
     void messageReceived(const QString& sender, const QString& message);
     void sendMessage();
-    void disconnectedFromServer();
+    void disconnected();
     void userJoined(const QString& username);
     void userLeft(const QString& username);
     void error(QAbstractSocket::SocketError socketError);

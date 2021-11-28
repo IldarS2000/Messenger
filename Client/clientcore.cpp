@@ -32,10 +32,10 @@ void ClientCore::login(const QString& userName)
         QDataStream clientStream(clientSocket);
         clientStream.setVersion(serializerVersion);
 
-        QJsonObject dataUnit;
-        dataUnit[Packet::Type::TYPE]     = Packet::Type::LOGIN;
-        dataUnit[Packet::Data::USERNAME] = userName;
-        clientStream << QJsonDocument(dataUnit).toJson(QJsonDocument::Compact);
+        QJsonObject packet;
+        packet[Packet::Type::TYPE]     = Packet::Type::LOGIN;
+        packet[Packet::Data::USERNAME] = userName;
+        clientStream << QJsonDocument(packet).toJson(QJsonDocument::Compact);
     }
 }
 
@@ -47,10 +47,10 @@ void ClientCore::sendMessage(const QString& message)
     QDataStream clientStream(clientSocket);
     clientStream.setVersion(serializerVersion);
 
-    QJsonObject dataUnit;
-    dataUnit[Packet::Type::TYPE] = Packet::Type::MESSAGE;
-    dataUnit[Packet::Data::TEXT] = message;
-    clientStream << QJsonDocument(dataUnit).toJson();
+    QJsonObject packet;
+    packet[Packet::Type::TYPE] = Packet::Type::MESSAGE;
+    packet[Packet::Data::TEXT] = message;
+    clientStream << QJsonDocument(packet).toJson();
 }
 
 void ClientCore::disconnectFromHost()
@@ -58,49 +58,75 @@ void ClientCore::disconnectFromHost()
     clientSocket->disconnectFromHost();
 }
 
-void ClientCore::jsonReceived(const QJsonObject& dataUnit)
+bool ClientCore::isEqualPacketType(const QJsonValue& jsonType, const char* const strType)
 {
-    const QJsonValue typeVal = dataUnit.value(QLatin1String(Packet::Type::TYPE));
-    if (typeVal.isNull() || !typeVal.isString()) {
+    return jsonType.toString().compare(QLatin1String(strType), Qt::CaseInsensitive) == 0;
+}
+
+void ClientCore::handleLoginPacket(const QJsonObject& packet)
+{
+    if (logged) {
         return;
     }
-    if (typeVal.toString().compare(QLatin1String(Packet::Type::LOGIN), Qt::CaseInsensitive) == 0) {
-        if (logged) {
-            return;
-        }
-        const QJsonValue resultVal = dataUnit.value(QLatin1String(Packet::Data::SUCCESS));
-        if (resultVal.isNull() || !resultVal.isBool()) {
-            return;
-        }
-        const bool loginSuccess = resultVal.toBool();
-        if (loginSuccess) {
-            emit loggedIn();
-            return;
-        }
-        const QJsonValue reasonVal = dataUnit.value(QLatin1String(Packet::Data::REASON));
-        emit loginError(reasonVal.toString());
-    } else if (typeVal.toString().compare(QLatin1String(Packet::Type::MESSAGE), Qt::CaseInsensitive) == 0) {
-        const QJsonValue textVal = dataUnit.value(QLatin1String(Packet::Data::TEXT));
-        if (textVal.isNull() || !textVal.isString()) {
-            return;
-        }
-        const QJsonValue senderVal = dataUnit.value(QLatin1String(Packet::Data::SENDER));
-        if (senderVal.isNull() || !senderVal.isString()) {
-            return;
-        }
-        emit messageReceived(senderVal.toString(), textVal.toString());
-    } else if (typeVal.toString().compare(QLatin1String(Packet::Type::USER_JOINED), Qt::CaseInsensitive) == 0) {
-        const QJsonValue usernameVal = dataUnit.value(QLatin1String(Packet::Data::USERNAME));
-        if (usernameVal.isNull() || !usernameVal.isString()) {
-            return;
-        }
-        emit userJoined(usernameVal.toString());
-    } else if (typeVal.toString().compare(QLatin1String(Packet::Type::USER_LEFT), Qt::CaseInsensitive) == 0) {
-        const QJsonValue usernameVal = dataUnit.value(QLatin1String(Packet::Data::USERNAME));
-        if (usernameVal.isNull() || !usernameVal.isString()) {
-            return;
-        }
-        emit userLeft(usernameVal.toString());
+    const QJsonValue successVal = packet.value(QLatin1String(Packet::Data::SUCCESS));
+    if (successVal.isNull() || !successVal.isBool()) {
+        return;
+    }
+    const bool loginSuccess = successVal.toBool();
+    if (loginSuccess) {
+        emit loggedIn();
+        return;
+    }
+    const QJsonValue reasonVal = packet.value(QLatin1String(Packet::Data::REASON));
+    emit loginError(reasonVal.toString());
+}
+
+void ClientCore::handleMessagePacket(const QJsonObject& packet)
+{
+    const QJsonValue textVal = packet.value(QLatin1String(Packet::Data::TEXT));
+    if (textVal.isNull() || !textVal.isString()) {
+        return;
+    }
+    const QJsonValue senderVal = packet.value(QLatin1String(Packet::Data::SENDER));
+    if (senderVal.isNull() || !senderVal.isString()) {
+        return;
+    }
+    emit messageReceived(senderVal.toString(), textVal.toString());
+}
+
+void ClientCore::handleUserJoinedPacket(const QJsonObject& packet)
+{
+    const QJsonValue usernameVal = packet.value(QLatin1String(Packet::Data::USERNAME));
+    if (usernameVal.isNull() || !usernameVal.isString()) {
+        return;
+    }
+    emit userJoined(usernameVal.toString());
+}
+
+void ClientCore::handleUserLeftPacket(const QJsonObject& packet)
+{
+    const QJsonValue usernameVal = packet.value(QLatin1String(Packet::Data::USERNAME));
+    if (usernameVal.isNull() || !usernameVal.isString()) {
+        return;
+    }
+    emit userLeft(usernameVal.toString());
+}
+
+void ClientCore::packetReceived(const QJsonObject& packet)
+{
+    const QJsonValue packetTypeVal = packet.value(QLatin1String(Packet::Type::TYPE));
+    if (packetTypeVal.isNull() || !packetTypeVal.isString()) {
+        return;
+    }
+
+    if (isEqualPacketType(packetTypeVal, Packet::Type::LOGIN)) {
+        handleLoginPacket(packet);
+    } else if (isEqualPacketType(packetTypeVal, Packet::Type::MESSAGE)) {
+        handleMessagePacket(packet);
+    } else if (isEqualPacketType(packetTypeVal, Packet::Type::USER_JOINED)) {
+        handleUserJoinedPacket(packet);
+    } else if (isEqualPacketType(packetTypeVal, Packet::Type::USER_LEFT)) {
+        handleUserLeftPacket(packet);
     }
 }
 
@@ -118,7 +144,7 @@ void ClientCore::onReadyRead()
             const QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData, &parseError);
             if (parseError.error == QJsonParseError::NoError) {
                 if (jsonDoc.isObject()) {
-                    jsonReceived(jsonDoc.object());
+                    packetReceived(jsonDoc.object());
                 }
             }
         } else {

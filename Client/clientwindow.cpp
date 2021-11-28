@@ -15,18 +15,18 @@ ClientWindow::ClientWindow(QWidget* parent)
     ui->chatView->setModel(chatModel);
     ui->listWidget->setFocusPolicy(Qt::NoFocus);
 
-    // handle signals from logic view of client
-    connect(clientCore, &ClientCore::connected, this, &ClientWindow::connectedToServer);
+    // connect for handle signals from logic view of client
+    connect(clientCore, &ClientCore::connected, this, &ClientWindow::connected);
     connect(clientCore, &ClientCore::loggedIn, this, &ClientWindow::loggedIn);
-    connect(clientCore, &ClientCore::loginError, this, &ClientWindow::loginFailed);
+    connect(clientCore, &ClientCore::loginError, this, &ClientWindow::loginError);
     connect(clientCore, &ClientCore::messageReceived, this, &ClientWindow::messageReceived);
-    connect(clientCore, &ClientCore::disconnected, this, &ClientWindow::disconnectedFromServer);
+    connect(clientCore, &ClientCore::disconnected, this, &ClientWindow::disconnected);
     connect(clientCore, &ClientCore::error, this, &ClientWindow::error);
     connect(clientCore, &ClientCore::userJoined, this, &ClientWindow::userJoined);
     connect(clientCore, &ClientCore::userLeft, this, &ClientWindow::userLeft);
-    // connection to server
+    // connect to server
     connect(ui->connectButton, &QPushButton::clicked, this, &ClientWindow::attemptConnection);
-    // connections for send message
+    // connect for send message
     connect(ui->sendButton, &QPushButton::clicked, this, &ClientWindow::sendMessage);
     connect(ui->messageEdit, &QLineEdit::returnPressed, this, &ClientWindow::sendMessage);
 }
@@ -49,7 +49,7 @@ void ClientWindow::attemptConnection()
     clientCore->connectToServer(QHostAddress(hostAddress), PORT);
 }
 
-void ClientWindow::connectedToServer()
+void ClientWindow::connected()
 {
     const QString newUsername = QInputDialog::getText(this, tr("choose username"), tr("username"));
     if (newUsername.isEmpty()) {
@@ -72,10 +72,10 @@ void ClientWindow::loggedIn()
     lastUserName.clear();
 }
 
-void ClientWindow::loginFailed(const QString& reason)
+void ClientWindow::loginError(const QString& reason)
 {
     QMessageBox::critical(this, tr("Error"), reason);
-    connectedToServer();
+    connected();
 }
 
 void ClientWindow::messageReceived(const QString& sender, const QString& message)
@@ -116,7 +116,7 @@ void ClientWindow::sendMessage()
     lastUserName.clear();
 }
 
-void ClientWindow::disconnectedFromServer()
+void ClientWindow::disconnected()
 {
     QMessageBox::warning(this, tr("Disconnected"), tr("The host terminated the connection"));
 
