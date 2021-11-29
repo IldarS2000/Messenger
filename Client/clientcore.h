@@ -2,6 +2,7 @@
 #define CLIENT_CORE_H
 
 #include <QObject>
+#include <QSslSocket>
 #include <QTcpSocket>
 #include <QHostAddress>
 #include <QJsonDocument>
@@ -31,7 +32,7 @@ signals:
     void userLeft(const QString& username);
 
 private:
-    QTcpSocket* clientSocket;
+    QSslSocket* clientSocket;
     bool logged;
 
 private:

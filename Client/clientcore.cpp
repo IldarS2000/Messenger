@@ -5,13 +5,13 @@
 #include "clientcore.h"
 #include "constants.h"
 
-ClientCore::ClientCore(QObject* parent) : QObject(parent), clientSocket(new QTcpSocket(this)), logged(false)
+ClientCore::ClientCore(QObject* parent) : QObject(parent), clientSocket(new QSslSocket(this)), logged(false)
 {
-    connect(clientSocket, &QTcpSocket::connected, this, &ClientCore::connected);
-    connect(clientSocket, &QTcpSocket::disconnected, this, &ClientCore::disconnected);
-    connect(clientSocket, &QTcpSocket::disconnected, this, [this]() -> void { logged = false; });
+    connect(clientSocket, &QSslSocket::connected, this, &ClientCore::connected);
+    connect(clientSocket, &QSslSocket::disconnected, this, &ClientCore::disconnected);
+    connect(clientSocket, &QSslSocket::disconnected, this, [this]() -> void { logged = false; });
 
-    connect(clientSocket, &QTcpSocket::readyRead, this, &ClientCore::onReadyRead);
+    connect(clientSocket, &QSslSocket::readyRead, this, &ClientCore::onReadyRead);
     connect(clientSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
             &ClientCore::error);
 }
@@ -24,6 +24,7 @@ ClientCore::~ClientCore()
 void ClientCore::connectToServer(const QHostAddress& address, const quint16 port)
 {
     clientSocket->connectToHost(address, port);
+    clientSocket->startClientEncryption();
 }
 
 void ClientCore::login(const QString& userName)

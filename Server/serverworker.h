@@ -2,6 +2,7 @@
 #define SERVER_WORKER_H
 
 #include <QObject>
+#include <QSslSocket>
 #include <QTcpSocket>
 #include <QReadWriteLock>
 #include <QJsonObject>
@@ -28,7 +29,7 @@ signals:
     void error();
 
 private:
-    QTcpSocket* serverSocket;
+    QSslSocket* serverSocket;
     QString userName;
     mutable QReadWriteLock userNameLock;
 };

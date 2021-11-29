@@ -4,10 +4,10 @@
 #include "serverworker.h"
 #include "constants.h"
 
-ServerWorker::ServerWorker(QObject* parent) : QObject(parent), serverSocket(new QTcpSocket(this))
+ServerWorker::ServerWorker(QObject* parent) : QObject(parent), serverSocket(new QSslSocket(this))
 {
-    connect(serverSocket, &QTcpSocket::readyRead, this, &ServerWorker::onReadyRead);
-    connect(serverSocket, &QTcpSocket::disconnected, this, &ServerWorker::disconnectedFromClient);
+    connect(serverSocket, &QSslSocket::readyRead, this, &ServerWorker::onReadyRead);
+    connect(serverSocket, &QSslSocket::disconnected, this, &ServerWorker::disconnectedFromClient);
     connect(serverSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
             &ServerWorker::error);
 }
