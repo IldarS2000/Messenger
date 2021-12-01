@@ -4,6 +4,9 @@
 
 void messageHandler(const QtMsgType type, const QMessageLogContext& context, const QString& message)
 {
+    if (type == QtWarningMsg && message.startsWith("setGeometry")) {
+        return;
+    }
     QTextStream out(stdout);
     out << "[" << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss") << "]" << ' ';
 
