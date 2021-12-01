@@ -42,6 +42,7 @@ private slots:
     void error(QAbstractSocket::SocketError socketError);
 
 private:
+    QString getTextDialog(const QString& title, const QString& label, const QString& defaultText);
     static QStringList splitString(const QString& str, int rowSize);
     static QStringList splitText(const QString& text);
     void displayMessage(const QString& message, int lastRowNumber, int alignMask);

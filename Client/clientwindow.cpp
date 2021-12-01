@@ -1,6 +1,9 @@
 #include <QStandardItemModel>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QFormLayout>
+#include <QLabel>
+#include <QDialogButtonBox>
 #include <QHostAddress>
 #include <QDateTime>
 #include "clientwindow.h"
@@ -42,10 +45,34 @@ ClientWindow::~ClientWindow()
     delete chatModel;
 }
 
+QString ClientWindow::getTextDialog(const QString& title, const QString& label, const QString& defaultText = "")
+{
+    QDialog dialog(this);
+    dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+    dialog.setWindowTitle(title);
+    dialog.resize(300, 100);
+
+    QFormLayout form(&dialog);
+    form.addRow(new QLabel(label));
+
+    QLineEdit lineEdit(&dialog);
+    lineEdit.setText(defaultText);
+    form.addRow(&lineEdit);
+
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, &dialog);
+    form.addRow(&buttonBox);
+    QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
+    QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    if (dialog.exec() == QDialog::Accepted) {
+        return lineEdit.text();
+    }
+    return {};
+}
+
 void ClientWindow::attemptConnection()
 {
-    const QString hostAddress =
-            QInputDialog::getText(this, tr("choose server"), tr("address"), QLineEdit::Normal, LOCAL_HOST);
+    QString hostAddress = getTextDialog("choose server", "address", LOCAL_HOST);
     if (hostAddress.isEmpty()) {
         return;
     }
@@ -55,7 +82,7 @@ void ClientWindow::attemptConnection()
 
 void ClientWindow::connected()
 {
-    const QString newUsername = QInputDialog::getText(this, tr("choose username"), tr("username"));
+    const QString newUsername = getTextDialog("choose username", "username");
     if (newUsername.isEmpty() || newUsername.size() > maximumUserNameSize) {
         return clientCore->disconnectFromHost();
     }
