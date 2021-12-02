@@ -2,11 +2,26 @@
 #include <QDataStream>
 #include <QJsonParseError>
 #include <QJsonObject>
+#include <QFile>
 #include "clientcore.h"
 #include "constants.h"
 
 ClientCore::ClientCore(QObject* parent) : QObject(parent), clientSocket(new QSslSocket(this)), logged(false)
 {
+#ifdef SSL_ENABLE
+    clientSocket->setProtocol(QSsl::SslV3);
+    QByteArray certificate;
+    QFile fileCertificate("ssl/ssl.cert");
+    if (fileCertificate.open(QIODevice::ReadOnly)) {
+        certificate = fileCertificate.readAll();
+        fileCertificate.close();
+    } else {
+        qWarning() << fileCertificate.errorString();
+    }
+    QSslCertificate sslCertificate(certificate);
+    clientSocket->setLocalCertificate(sslCertificate);
+#endif
+
     connect(clientSocket, &QSslSocket::connected, this, &ClientCore::connected);
     connect(clientSocket, &QSslSocket::disconnected, this, &ClientCore::disconnected);
     connect(clientSocket, &QSslSocket::disconnected, this, [this]() -> void { logged = false; });
@@ -24,7 +39,9 @@ ClientCore::~ClientCore()
 void ClientCore::connectToServer(const QHostAddress& address, const quint16 port)
 {
     clientSocket->connectToHost(address, port);
+#ifdef SSL_ENABLE
     clientSocket->startClientEncryption();
+#endif
 }
 
 void ClientCore::login(const QString& userName)

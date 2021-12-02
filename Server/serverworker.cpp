@@ -1,11 +1,38 @@
 #include <QDataStream>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QFile>
+#include <QSslKey>
 #include "serverworker.h"
 #include "constants.h"
 
 ServerWorker::ServerWorker(QObject* parent) : QObject(parent), serverSocket(new QSslSocket(this))
 {
+#ifdef SSL_ENABLE
+    serverSocket->setProtocol(QSsl::SslV3);
+    QByteArray certificate;
+    QFile fileCertificate("ssl/ssl.cert");
+    if (fileCertificate.open(QIODevice::ReadOnly)) {
+        certificate = fileCertificate.readAll();
+        fileCertificate.close();
+    } else {
+        qWarning() << fileCertificate.errorString();
+    }
+    QSslCertificate sslCertificate(certificate);
+    serverSocket->setLocalCertificate(sslCertificate);
+
+    QByteArray privateKey;
+    QFile fileKey("ssl/ssl.key");
+    if (fileKey.open(QIODevice::ReadOnly)) {
+        privateKey = fileKey.readAll();
+        fileKey.close();
+    } else {
+        qWarning() << fileKey.errorString();
+    }
+    QSslKey sslKey(privateKey, QSsl::Rsa, QSsl::Pem, QSsl::PrivateKey, "localhost");
+    serverSocket->setPrivateKey(sslKey);
+#endif
+
     connect(serverSocket, &QSslSocket::readyRead, this, &ServerWorker::onReadyRead);
     connect(serverSocket, &QSslSocket::disconnected, this, &ServerWorker::disconnectedFromClient);
     connect(serverSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
@@ -19,7 +46,11 @@ ServerWorker::~ServerWorker()
 
 bool ServerWorker::setSocketDescriptor(const qintptr socketDescriptor)
 {
-    return serverSocket->setSocketDescriptor(socketDescriptor);
+    const bool ret = serverSocket->setSocketDescriptor(socketDescriptor);
+#ifdef SSL_ENABLE
+    serverSocket->startServerEncryption();
+#endif
+    return ret;
 }
 
 void ServerWorker::sendPacket(const QJsonObject& packet)
