@@ -2,6 +2,7 @@
 #include <QDataStream>
 #include <QJsonParseError>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QFile>
 #include "clientcore.h"
 #include "constants.h"
@@ -127,6 +128,20 @@ void ClientCore::handleUserLeftPacket(const QJsonObject& packet)
     emit userLeft(usernameVal.toString());
 }
 
+void ClientCore::handleInformJoinerPacket(const QJsonObject& packet)
+{
+    const QJsonValue usernamesVal = packet.value(QLatin1String(Packet::Data::USERNAMES));
+    if (usernamesVal.isNull() || !usernamesVal.isArray()) {
+        return;
+    }
+    QJsonArray jsonUsernames = usernamesVal.toArray();
+    QStringList usernames;
+    for (const auto& jsonUsername : jsonUsernames) {
+        usernames.push_back(jsonUsername.toString());
+    }
+    emit informJoiner(usernames);
+}
+
 void ClientCore::packetReceived(const QJsonObject& packet)
 {
     const QJsonValue packetTypeVal = packet.value(QLatin1String(Packet::Type::TYPE));
@@ -142,6 +157,8 @@ void ClientCore::packetReceived(const QJsonObject& packet)
         handleUserJoinedPacket(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::USER_LEFT)) {
         handleUserLeftPacket(packet);
+    } else if (isEqualPacketType(packetTypeVal, Packet::Type::INFORM_JOINER)) {
+        handleInformJoinerPacket(packet);
     }
 }
 

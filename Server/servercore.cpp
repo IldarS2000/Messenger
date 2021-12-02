@@ -2,19 +2,20 @@
 #include <functional>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QJsonArray>
 #include <QTimer>
 #include "servercore.h"
 #include "constants.h"
 
 ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
 {
-    availableThreads.reserve(idealThreadCount);
-    threadsLoad.reserve(idealThreadCount);
+    threads.reserve(idealThreadCount);
+    threadLoadFactor.reserve(idealThreadCount);
 }
 
 ServerCore::~ServerCore()
 {
-    for (QThread* singleThread : availableThreads) {
+    for (QThread* singleThread : threads) {
         singleThread->quit();
         singleThread->wait();
     }
@@ -28,19 +29,19 @@ void ServerCore::incomingConnection(const qintptr socketDescriptor)
         return;
     }
 
-    int threadIdx = availableThreads.size();
+    int threadIdx = threads.size();
     if (threadIdx < idealThreadCount) {
-        availableThreads.append(new QThread(this));
-        threadsLoad.append(1);
-        availableThreads.last()->start();
+        threads.append(new QThread(this));
+        threadLoadFactor.append(1);
+        threads.last()->start();
     } else {
         threadIdx = static_cast<int>(
-                std::distance(threadsLoad.begin(), std::min_element(threadsLoad.begin(), threadsLoad.end())));
-        ++threadsLoad[threadIdx];
+                std::distance(threadLoadFactor.begin(), std::min_element(threadLoadFactor.begin(), threadLoadFactor.end())));
+        ++threadLoadFactor[threadIdx];
     }
 
-    worker->moveToThread(availableThreads.at(threadIdx));
-    connect(availableThreads.at(threadIdx), &QThread::finished, worker, &QObject::deleteLater);
+    worker->moveToThread(threads.at(threadIdx));
+    connect(threads.at(threadIdx), &QThread::finished, worker, &QObject::deleteLater);
     connect(worker, &ServerWorker::disconnectedFromClient, this,
             [this, worker, threadIdx] { userDisconnected(worker, threadIdx); });
 
@@ -57,6 +58,15 @@ void ServerCore::sendPacket(ServerWorker* const destination, const QJsonObject& 
 {
     Q_ASSERT(destination);
     QTimer::singleShot(0, destination, [destination, packet] { destination->sendPacket(packet); });
+}
+
+void ServerCore::unicast(const QJsonObject& packet, ServerWorker* const receiver)
+{
+    auto worker = std::find(clients.begin(), clients.end(), receiver);
+    if (worker != clients.end()){
+        Q_ASSERT(*worker);
+        sendPacket(*worker, packet);
+    }
 }
 
 void ServerCore::broadcast(const QJsonObject& packet, ServerWorker* const exclude)
@@ -83,7 +93,7 @@ void ServerCore::packetReceived(ServerWorker* sender, const QJsonObject& packet)
 
 void ServerCore::userDisconnected(ServerWorker* const sender, const int threadIdx)
 {
-    --threadsLoad[threadIdx];
+    --threadLoadFactor[threadIdx];
     clients.removeAll(sender);
     const QString& userName = sender->getUserName();
     if (!userName.isEmpty()) {
@@ -110,6 +120,18 @@ void ServerCore::stopServer()
 bool ServerCore::isEqualPacketType(const QJsonValue& jsonType, const char* const strType)
 {
     return jsonType.toString().compare(QLatin1String(strType), Qt::CaseInsensitive) == 0;
+}
+
+QJsonArray ServerCore::getUsernames(ServerWorker* const exclude) const
+{
+    QJsonArray usernames;
+    for (ServerWorker* worker : clients) {
+        Q_ASSERT(worker);
+        if (worker != exclude) {
+            usernames.push_back(worker->getUserName());
+        }
+    }
+    return usernames;
 }
 
 void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObject& packet)
@@ -151,6 +173,11 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
     successPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
     successPacket[Packet::Data::SUCCESS] = true;
     sendPacket(sender, successPacket);
+
+    QJsonObject unicastPacket;
+    unicastPacket[Packet::Type::TYPE] = Packet::Type::INFORM_JOINER;
+    unicastPacket[Packet::Data::USERNAMES] = getUsernames(sender);
+    unicast(unicastPacket, sender);
 
     QJsonObject connectedBroadcastPacket;
     connectedBroadcastPacket[Packet::Type::TYPE]     = Packet::Type::USER_JOINED;

@@ -31,6 +31,7 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(clientCore, &ClientCore::error, this, &ClientWindow::error);
     connect(clientCore, &ClientCore::userJoined, this, &ClientWindow::userJoined);
     connect(clientCore, &ClientCore::userLeft, this, &ClientWindow::userLeft);
+    connect(clientCore, &ClientCore::informJoiner, this, &ClientWindow::informJoiner);
     // connect to server
     connect(ui->connectButton, &QPushButton::clicked, this, &ClientWindow::attemptConnection);
     // connect for send message
@@ -241,6 +242,13 @@ void ClientWindow::userLeft(const QString& username)
         return;
     }
     delete items.at(0);
+}
+
+void ClientWindow::informJoiner(const QStringList& usernames)
+{
+    for (const auto& username : usernames) {
+        ui->listWidget->addItem(username);
+    }
 }
 
 void ClientWindow::error(const QAbstractSocket::SocketError socketError)

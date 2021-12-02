@@ -39,6 +39,7 @@ private slots:
     void disconnected();
     void userJoined(const QString& username);
     void userLeft(const QString& username);
+    void informJoiner(const QStringList& usernames);
     void error(QAbstractSocket::SocketError socketError);
 
 private:

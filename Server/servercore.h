@@ -20,10 +20,11 @@ protected:
 
 private:
     const int idealThreadCount;
-    QVector<QThread*> availableThreads;
-    QVector<int> threadsLoad;
+    QVector<QThread*> threads;
+    QVector<int> threadLoadFactor;
     QVector<ServerWorker*> clients;
 private slots:
+    void unicast(const QJsonObject& packet, ServerWorker* receiver);
     void broadcast(const QJsonObject& packet, ServerWorker* exclude);
     void packetReceived(ServerWorker* sender, const QJsonObject& packet);
     void userDisconnected(ServerWorker* sender, int threadIdx);
@@ -34,6 +35,7 @@ public slots:
 private:
     void packetFromLoggedOut(ServerWorker* sender, const QJsonObject& packet);
     void packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet);
+    QJsonArray getUsernames(ServerWorker* exclude) const;
     static void sendPacket(ServerWorker* destination, const QJsonObject& packet);
     static bool isEqualPacketType(const QJsonValue& jsonType, const char* strType);
 signals:

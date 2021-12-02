@@ -30,6 +30,7 @@ signals:
     void error(QAbstractSocket::SocketError socketError);
     void userJoined(const QString& username);
     void userLeft(const QString& username);
+    void informJoiner(const QStringList& usernames);
 
 private:
     QSslSocket* clientSocket;
@@ -41,6 +42,7 @@ private:
     void handleMessagePacket(const QJsonObject& packet);
     void handleUserJoinedPacket(const QJsonObject& packet);
     void handleUserLeftPacket(const QJsonObject& packet);
+    void handleInformJoinerPacket(const QJsonObject& packet);
     static bool isEqualPacketType(const QJsonValue& jsonType, const char* strType);
 };
 
