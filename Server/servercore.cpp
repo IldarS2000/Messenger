@@ -154,6 +154,22 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
         return;
     }
 
+    const QJsonValue passwordVal = packet.value(QLatin1String(Packet::Data::PASSWORD));
+    if (passwordVal.isNull() || !passwordVal.isString()) {
+        return;
+    }
+    const QString password = passwordVal.toString().simplified();
+    if (password.isEmpty()) {
+        return;
+    }
+    if (password != "1234") {
+        QJsonObject errorPacket;
+        errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
+        errorPacket[Packet::Data::SUCCESS] = false;
+        errorPacket[Packet::Data::REASON]  = "invalid password";
+        sendPacket(sender, errorPacket);
+    }
+
     for (ServerWorker* worker : qAsConst(clients)) {
         if (worker == sender) {
             continue;

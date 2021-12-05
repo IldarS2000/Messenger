@@ -25,15 +25,18 @@ private:
     QStandardItemModel* chatModel;
     QString lastUserName;
     LoadingScreen* loadingScreen;
-    static constexpr int minWindowWidth      = 750;
-    static constexpr int minWindowHeight     = 500;
-    static constexpr int maxMessageRowSize   = 50;
-    static constexpr int maximumMessageSize  = 2048;
-    static constexpr int maximumUserNameSize = 32;
+    static constexpr int minWindowWidth    = 750;
+    static constexpr int minWindowHeight   = 500;
+    static constexpr int maxMessageRowSize = 50;
+    static constexpr int maxMessageSize    = 2048;
+    static constexpr int minUserNameSize   = 1;
+    static constexpr int maxUserNameSize   = 32;
+    static constexpr int minPasswordSize   = 4;
+    static constexpr int maxPasswordSize   = 32;
 private slots:
     void attemptConnection();
     void connected();
-    void attemptLogin(const QString& userName);
+    void attemptLogin(const QString& username, const QString& password);
     void loggedIn();
     void loginError(const QString& reason);
     void messageReceived(const QString& sender, const QString& message);
@@ -45,7 +48,7 @@ private slots:
     void error(QAbstractSocket::SocketError socketError);
 
 private:
-    QString getTextDialog(const QString& title, const QString& label, const QString& defaultText);
+    QPair<QString, QString> getConnectionCredentials();
     static QStringList splitString(const QString& str, int rowSize);
     static QStringList splitText(const QString& text);
     void displayMessage(const QString& message, int lastRowNumber, int alignMask);

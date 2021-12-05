@@ -45,7 +45,7 @@ void ClientCore::connectToServer(const QHostAddress& address, const quint16 port
 #endif
 }
 
-void ClientCore::login(const QString& userName)
+void ClientCore::login(const QString& username, const QString& password)
 {
     if (clientSocket->state() == QAbstractSocket::ConnectedState) {
         QDataStream clientStream(clientSocket);
@@ -53,7 +53,8 @@ void ClientCore::login(const QString& userName)
 
         QJsonObject packet;
         packet[Packet::Type::TYPE]     = Packet::Type::LOGIN;
-        packet[Packet::Data::USERNAME] = userName;
+        packet[Packet::Data::USERNAME] = username;
+        packet[Packet::Data::PASSWORD] = password;
         clientStream << QJsonDocument(packet).toJson(QJsonDocument::Compact);
     }
 }

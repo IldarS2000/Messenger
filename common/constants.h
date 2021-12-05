@@ -18,6 +18,7 @@ namespace Packet {
     } // namespace Type
     namespace Data {
         constexpr const char* const USERNAME  = "username";
+        constexpr const char* const PASSWORD  = "password";
         constexpr const char* const TEXT      = "text";
         constexpr const char* const SENDER    = "sender";
         constexpr const char* const SUCCESS   = "success";

@@ -16,7 +16,7 @@ public:
     ~ClientCore() override;
 public slots:
     void connectToServer(const QHostAddress& address, quint16 port);
-    void login(const QString& userName);
+    void login(const QString& username, const QString& password);
     void sendMessage(const QString& message);
     void disconnectFromHost();
 private slots:

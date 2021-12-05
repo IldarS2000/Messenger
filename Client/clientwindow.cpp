@@ -48,19 +48,24 @@ ClientWindow::~ClientWindow()
     delete loadingScreen;
 }
 
-QString ClientWindow::getTextDialog(const QString& title, const QString& label, const QString& defaultText = "")
+QPair<QString, QString> ClientWindow::getConnectionCredentials()
 {
     QDialog dialog(this);
     dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint & ~Qt::WindowMaximizeButtonHint);
-    dialog.setWindowTitle(title);
+    dialog.setWindowTitle("Connect group");
     dialog.resize(300, 100);
-
     QFormLayout form(&dialog);
-    form.addRow(new QLabel(label));
 
-    QLineEdit lineEdit(&dialog);
-    lineEdit.setText(defaultText);
-    form.addRow(&lineEdit);
+    QLabel usernameLabel("username");
+    form.addRow(&usernameLabel);
+    QLineEdit usernameLineEdit(&dialog);
+    form.addRow(&usernameLineEdit);
+
+    QLabel passwordLabel("password");
+    form.addRow(&passwordLabel);
+    QLineEdit passwordLineEdit(&dialog);
+    passwordLineEdit.setEchoMode(QLineEdit::Password);
+    form.addRow(&passwordLineEdit);
 
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, &dialog);
     form.addRow(&buttonBox);
@@ -70,7 +75,7 @@ QString ClientWindow::getTextDialog(const QString& title, const QString& label, 
     connect(clientCore, &ClientCore::disconnected, &dialog, &QDialog::close);
 
     if (dialog.exec() == QDialog::Accepted) {
-        return lineEdit.text();
+        return {usernameLineEdit.text(), passwordLineEdit.text()};
     }
     return {};
 }
@@ -83,16 +88,39 @@ void ClientWindow::attemptConnection()
 
 void ClientWindow::connected()
 {
-    const QString newUsername = getTextDialog("choose username", "username");
-    if (newUsername.isEmpty() || newUsername.size() > maximumUserNameSize) {
-        return clientCore->disconnectFromHost();
-    }
-    attemptLogin(newUsername);
+    QPair<QString, QString> credentials;
+    bool usernameOk;
+    bool passwordOk;
+    do {
+        credentials             = getConnectionCredentials();
+        const QString& username = credentials.first;
+        const QString& password = credentials.second;
+        usernameOk =
+                (!username.isEmpty() && (username.size() >= minUserNameSize && username.size() <= maxUserNameSize));
+        passwordOk =
+                (!password.isEmpty() && (password.size() >= minPasswordSize && password.size() <= maxPasswordSize));
+        if (!usernameOk) {
+            QMessageBox::information(this, tr("username error"),
+                                     tr("min %1 characters\nmax %2 characters")
+                                             .arg(QString::number(minUserNameSize), QString::number(maxUserNameSize)));
+            continue;
+        }
+        if (!passwordOk) {
+            QMessageBox::information(this, tr("password error"),
+                                     tr("min %1 characters\nmax %2 characters")
+                                             .arg(QString::number(minPasswordSize), QString::number(maxPasswordSize)));
+            continue;
+        }
+        attemptLogin(username, password);
+        credentials.first.clear();
+        credentials.second.clear();
+        return;
+    } while (true);
 }
 
-void ClientWindow::attemptLogin(const QString& userName)
+void ClientWindow::attemptLogin(const QString& username, const QString& password)
 {
-    clientCore->login(userName);
+    clientCore->login(username, password);
 }
 
 void ClientWindow::loggedIn()
@@ -191,7 +219,7 @@ void ClientWindow::messageReceived(const QString& sender, const QString& message
 void ClientWindow::sendMessage()
 {
     const QString message = ui->messageEdit->text();
-    if (message.isEmpty() || message.size() > maximumMessageSize) {
+    if (message.isEmpty() || message.size() > maxMessageSize) {
         return;
     }
     clientCore->sendMessage(message);
