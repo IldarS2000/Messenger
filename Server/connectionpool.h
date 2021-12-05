@@ -11,9 +11,9 @@ class ConnectionPool
 {
     Q_DISABLE_COPY(ConnectionPool)
 public:
-    static void release();
     static QSqlDatabase getConnection();
     static void releaseConnection(const QSqlDatabase& connection);
+    static void release();
     ~ConnectionPool();
 
 private:
@@ -25,11 +25,11 @@ private:
     QQueue<QString> usedConnectionNames;
     QQueue<QString> unusedConnectionNames;
 
-    static constexpr const char* const testOnBorrowSql = "SELECT 1";
-    static constexpr bool testOnBorrow                 = true;
-    static constexpr int maxWaitTime                   = 1000;
-    static constexpr int waitInterval                  = 200;
-    static constexpr int maxConnectionCount            = 5;
+    static constexpr const char* const testOnBorrowQuery = "SELECT 1";
+    static constexpr bool testOnBorrow                   = true;
+    static constexpr int maxWaitTime                     = 1000;
+    static constexpr int waitInterval                    = 200;
+    static constexpr int maxConnectionCount              = 4;
     static inline QMutex mutex{};
     static inline QWaitCondition waitConnection{};
     static inline ConnectionPool* instance = nullptr;

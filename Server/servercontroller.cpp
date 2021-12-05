@@ -1,4 +1,5 @@
 #include "servercontroller.h"
+#include "connectionpool.h"
 #include "constants.h"
 
 ServerController::ServerController() : serverCore(new ServerCore()) {}
@@ -6,6 +7,7 @@ ServerController::ServerController() : serverCore(new ServerCore()) {}
 ServerController::~ServerController()
 {
     delete serverCore;
+    ConnectionPool::release();
 }
 
 void ServerController::startServer()

@@ -75,7 +75,7 @@ QSqlDatabase ConnectionPool::createConnection(const QString& connectionName)
         QSqlDatabase db = QSqlDatabase::database(connectionName);
 
         if (testOnBorrow) {
-            QSqlQuery query(testOnBorrowSql, db);
+            QSqlQuery query(testOnBorrowQuery, db);
             if (query.lastError().type() != QSqlError::NoError && !db.open()) {
                 qWarning() << qPrintable(QString("DB fail:") + db.lastError().text());
                 return {};

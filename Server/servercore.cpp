@@ -9,7 +9,6 @@
 #include "servercore.h"
 #include "connectionpool.h"
 #include "constants.h"
-#include "config.h"
 
 ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
 {
@@ -22,6 +21,7 @@ ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(q
     while (query.next()) {
         qDebug() << query.value("name").toString();
     }
+    ConnectionPool::releaseConnection(conn);
 }
 
 ServerCore::~ServerCore()
