@@ -20,7 +20,7 @@ ClientWindow::ClientWindow(QWidget* parent)
 
     chatModel->insertColumn(0);
     ui->chatView->setModel(chatModel);
-    ui->listWidget->setFocusPolicy(Qt::NoFocus);
+    ui->users->setFocusPolicy(Qt::NoFocus);
 
     // connect for handle signals from logic view of client
     connect(clientCore, &ClientCore::connected, loadingScreen, &LoadingScreen::close);
@@ -231,13 +231,13 @@ void ClientWindow::userEventImpl(const QString& username, const QString& event)
 void ClientWindow::userJoined(const QString& username)
 {
     userEventImpl(username, "joined the group");
-    ui->listWidget->addItem(username);
+    ui->users->addItem(username);
 }
 
 void ClientWindow::userLeft(const QString& username)
 {
     userEventImpl(username, "left the group");
-    QList<QListWidgetItem*> items = ui->listWidget->findItems(username, Qt::MatchExactly);
+    QList<QListWidgetItem*> items = ui->users->findItems(username, Qt::MatchExactly);
     if (items.isEmpty()) {
         return;
     }
@@ -247,7 +247,7 @@ void ClientWindow::userLeft(const QString& username)
 void ClientWindow::informJoiner(const QStringList& usernames)
 {
     for (const auto& username : usernames) {
-        ui->listWidget->addItem(username);
+        ui->users->addItem(username);
     }
 }
 
