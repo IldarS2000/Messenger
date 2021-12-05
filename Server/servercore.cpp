@@ -7,6 +7,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include "servercore.h"
+#include "connectionpool.h"
 #include "constants.h"
 #include "config.h"
 
@@ -15,16 +16,12 @@ ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(q
     threads.reserve(idealThreadCount);
     threadLoadFactor.reserve(idealThreadCount);
 
-    QSqlDatabase db = QSqlDatabase::addDatabase(DB_TYPE);
-    db.setHostName(DB_HOSTNAME);
-    db.setDatabaseName(DB_NAME);
-    db.setUserName(DB_USERNAME);
-    db.setPassword(DB_PASSWORD);
-    if (!db.open()) {
-        qCritical() << ("DB connection fail");
-        return;
+    auto conn = ConnectionPool::getConnection();
+    QSqlQuery query(conn);
+    query.exec("SELECT * from \"group\"");
+    while (query.next()) {
+        qDebug() << query.value("name").toString();
     }
-    qInfo() << "DB connection ok";
 }
 
 ServerCore::~ServerCore()

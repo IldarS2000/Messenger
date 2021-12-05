@@ -44,7 +44,7 @@ QSqlDatabase ConnectionPool::getConnection()
     if (!pool.unusedConnectionNames.empty()) {
         connectionName = pool.unusedConnectionNames.dequeue();
     } else if (connectionCount < ConnectionPool::maxConnectionCount) {
-        connectionName = QString("conn-%1").arg(QUuid::createUuid().toString());
+        connectionName = QString(QUuid::createUuid().toString());
     } else {
         qInfo() << "cannot create more connections";
         return {};
@@ -77,7 +77,7 @@ QSqlDatabase ConnectionPool::createConnection(const QString& connectionName)
         if (testOnBorrow) {
             QSqlQuery query(testOnBorrowSql, db);
             if (query.lastError().type() != QSqlError::NoError && !db.open()) {
-                qWarning() << "DB fail:" << db.lastError().text();
+                qWarning() << qPrintable(QString("DB fail:") + db.lastError().text());
                 return {};
             }
         }
@@ -92,10 +92,10 @@ QSqlDatabase ConnectionPool::createConnection(const QString& connectionName)
     db.setPassword(DB_PASSWORD);
 
     if (!db.open()) {
-        qWarning() << "DB fail:" << db.lastError().text();
+        qWarning() << qPrintable(QString("DB fail:") + db.lastError().text());
         return {};
     }
-    qInfo() << "DB connection <" << connectionName << "> ok";
+    qInfo() << qPrintable(QString("DB connection ") + connectionName + QString(" ok"));
 
     return db;
 }
