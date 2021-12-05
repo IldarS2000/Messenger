@@ -116,7 +116,6 @@ void ClientWindow::connected()
             credentials.second.clear();
             return;
         }
-        clientCore->disconnectFromHost();
     } while (true);
 }
 

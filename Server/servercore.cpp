@@ -14,14 +14,6 @@ ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(q
 {
     threads.reserve(idealThreadCount);
     threadLoadFactor.reserve(idealThreadCount);
-
-    auto conn = ConnectionPool::getConnection();
-    QSqlQuery query(conn);
-    query.exec("SELECT * from \"group\"");
-    while (query.next()) {
-        qDebug() << query.value("name").toString();
-    }
-    ConnectionPool::releaseConnection(conn);
 }
 
 ServerCore::~ServerCore()
@@ -173,12 +165,24 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
     if (password.isEmpty()) {
         return;
     }
+    auto conn = ConnectionPool::getConnection();
+    QSqlQuery query(conn);
+    query.exec("SELECT password from \"group\" g"
+               "where g.name = 'main'");
+    query.value("password").toString();
+    QString passwordDb;
+    while (query.next()) {
+        qDebug() << query.value("password").toString();
+        passwordDb = query.value("password").toString();
+    }
+    ConnectionPool::releaseConnection(conn);
     if (password != "1234") {
         QJsonObject errorPacket;
         errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
         errorPacket[Packet::Data::SUCCESS] = false;
         errorPacket[Packet::Data::REASON]  = "invalid password";
         sendPacket(sender, errorPacket);
+        return;
     }
 
     for (ServerWorker* worker : qAsConst(clients)) {
