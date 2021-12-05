@@ -58,6 +58,18 @@
      <item>
       <widget class="QListWidget" name="users"/>
      </item>
+     <item>
+      <widget class="QPushButton" name="settings">
+       <property name="styleSheet">
+        <string notr="true">*:hover {
+  background-color: rgb(98,194,233);
+}</string>
+       </property>
+       <property name="text">
+        <string>settings</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item row="0" column="1">

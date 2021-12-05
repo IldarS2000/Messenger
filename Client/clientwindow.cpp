@@ -6,6 +6,7 @@
 #include <QDialogButtonBox>
 #include <QHostAddress>
 #include <QDateTime>
+#include <QTimer>
 #include "ui_window.h"
 #include "clientwindow.h"
 #include "constants.h"
@@ -128,6 +129,7 @@ void ClientWindow::loggedIn()
     ui->sendButton->setEnabled(true);
     ui->messageEdit->setEnabled(true);
     ui->chatView->setEnabled(true);
+    QTimer::singleShot(0, ui->messageEdit, SLOT(setFocus()));
     lastUserName.clear();
 }
 
