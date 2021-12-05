@@ -4,13 +4,27 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QTimer>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include "servercore.h"
 #include "constants.h"
+#include "config.h"
 
 ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
 {
     threads.reserve(idealThreadCount);
     threadLoadFactor.reserve(idealThreadCount);
+
+    QSqlDatabase db = QSqlDatabase::addDatabase(DB_TYPE);
+    db.setHostName(DB_HOSTNAME);
+    db.setDatabaseName(DB_NAME);
+    db.setUserName(DB_USERNAME);
+    db.setPassword(DB_PASSWORD);
+    if (!db.open()) {
+        qCritical() << ("DB connection fail");
+        return;
+    }
+    qInfo() << "DB connection ok";
 }
 
 ServerCore::~ServerCore()

@@ -7,6 +7,7 @@ find_package(Qt5 5.7 COMPONENTS
 		Gui
 		Widgets
 		Network
+		Sql
 		REQUIRED)
 aux_source_directory(../Server SOURCES)
 aux_source_directory(../common SOURCES)
@@ -15,7 +16,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 		Qt5::Core
 		Qt5::Gui
 		Qt5::Widgets
-		Qt5::Network)
+		Qt5::Network
+		Qt5::Sql)
 
 add_compile_definitions(QT_MESSAGELOGCONTEXT)
 set_target_properties(${PROJECT_NAME} PROPERTIES
