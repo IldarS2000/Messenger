@@ -78,7 +78,6 @@ QString ClientWindow::getTextDialog(const QString& title, const QString& label, 
 void ClientWindow::attemptConnection()
 {
     loadingScreen->show();
-    ui->connectButton->setEnabled(false);
     clientCore->connectToServer(QHostAddress(HOST), PORT);
 }
 
@@ -212,7 +211,6 @@ void ClientWindow::disconnected()
     ui->sendButton->setEnabled(false);
     ui->messageEdit->setEnabled(false);
     ui->chatView->setEnabled(false);
-    ui->connectButton->setEnabled(true);
     lastUserName.clear();
 
     attemptConnection();

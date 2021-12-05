@@ -35,8 +35,8 @@ void ServerCore::incomingConnection(const qintptr socketDescriptor)
         threadLoadFactor.append(1);
         threads.last()->start();
     } else {
-        threadIdx = static_cast<int>(
-                std::distance(threadLoadFactor.begin(), std::min_element(threadLoadFactor.begin(), threadLoadFactor.end())));
+        threadIdx = static_cast<int>(std::distance(threadLoadFactor.begin(),
+                                                   std::min_element(threadLoadFactor.begin(), threadLoadFactor.end())));
         ++threadLoadFactor[threadIdx];
     }
 
@@ -63,7 +63,7 @@ void ServerCore::sendPacket(ServerWorker* const destination, const QJsonObject& 
 void ServerCore::unicast(const QJsonObject& packet, ServerWorker* const receiver)
 {
     auto worker = std::find(clients.begin(), clients.end(), receiver);
-    if (worker != clients.end()){
+    if (worker != clients.end()) {
         Q_ASSERT(*worker);
         sendPacket(*worker, packet);
     }
@@ -108,7 +108,7 @@ void ServerCore::userDisconnected(ServerWorker* const sender, const int threadId
 
 void ServerCore::userError(ServerWorker* const sender)
 {
-    qWarning() << qPrintable(QString("error from ") + sender->getUserName());
+    qWarning() << qPrintable(QString("error from <") + sender->getUserName() + QString(">"));
 }
 
 void ServerCore::stopServer()
@@ -175,7 +175,7 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
     sendPacket(sender, successPacket);
 
     QJsonObject unicastPacket;
-    unicastPacket[Packet::Type::TYPE] = Packet::Type::INFORM_JOINER;
+    unicastPacket[Packet::Type::TYPE]      = Packet::Type::INFORM_JOINER;
     unicastPacket[Packet::Data::USERNAMES] = getUsernames(sender);
     unicast(unicastPacket, sender);
 

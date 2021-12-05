@@ -18,6 +18,11 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QPushButton" name="pushButton">
+       <property name="styleSheet">
+        <string notr="true">*:hover {
+  background-color: rgb(98,194,233);
+}</string>
+       </property>
        <property name="text">
         <string>create group</string>
        </property>
@@ -25,13 +30,24 @@
      </item>
      <item>
       <widget class="QPushButton" name="connectButton">
+       <property name="styleSheet">
+        <string notr="true">*:hover {
+  background-color: rgb(98,194,233);
+}</string>
+       </property>
        <property name="text">
         <string>connect group</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="comboBox"/>
+      <widget class="QComboBox" name="comboBox">
+       <property name="styleSheet">
+        <string notr="true">* { 
+  font: bold;
+}</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QListWidget" name="listWidget"/>
@@ -57,6 +73,29 @@
          <property name="enabled">
           <bool>false</bool>
          </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>35</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">* {
+  font: 15px;
+}</string>
+         </property>
         </widget>
        </item>
        <item>
@@ -64,8 +103,32 @@
          <property name="enabled">
           <bool>false</bool>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>35</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>35</width>
+           <height>30</height>
+          </size>
+         </property>
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">* {
+  border-image: url(:/sendButton.png) 3 10 3 10;
+  border-top: 3px transparent;
+  border-bottom: 3px transparent;
+  border-right: 10px transparent;
+  border-left: 10px transparent;
+}</string>
+         </property>
          <property name="text">
-          <string>&gt;&gt;&gt;</string>
+          <string/>
          </property>
          <property name="default">
           <bool>true</bool>
