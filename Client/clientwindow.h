@@ -5,6 +5,7 @@
 #include <QAbstractSocket>
 #include <QStandardItemModel>
 #include "clientcore.h"
+#include "loadingscreen.h"
 
 namespace Ui {
     class ClientWindow;
@@ -23,6 +24,7 @@ private:
     ClientCore* clientCore;
     QStandardItemModel* chatModel;
     QString lastUserName;
+    LoadingScreen* loadingScreen;
     static constexpr int minWindowWidth      = 750;
     static constexpr int minWindowHeight     = 500;
     static constexpr int maxMessageRowSize   = 50;

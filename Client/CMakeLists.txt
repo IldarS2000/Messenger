@@ -10,8 +10,9 @@ find_package(Qt5 5.7 COMPONENTS
         REQUIRED)
 aux_source_directory(../Client SOURCES)
 aux_source_directory(../common SOURCES)
+set(RESOURCES resources/logo.rc resources/resources.qrc)
 
-add_executable(${PROJECT_NAME} ${SOURCES} resources/logo.rc)
+add_executable(${PROJECT_NAME} ${SOURCES} ${RESOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt5::Core
         Qt5::Gui
@@ -22,6 +23,7 @@ add_compile_definitions(QT_MESSAGELOGCONTEXT)
 set_target_properties(${PROJECT_NAME} PROPERTIES
         AUTOMOC ON
         AUTOUIC ON
+        AUTORCC ON
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
         VERSION "1.0.0"

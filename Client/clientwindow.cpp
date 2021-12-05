@@ -6,13 +6,13 @@
 #include <QDialogButtonBox>
 #include <QHostAddress>
 #include <QDateTime>
-#include "clientwindow.h"
 #include "ui_window.h"
+#include "clientwindow.h"
 #include "constants.h"
 
 ClientWindow::ClientWindow(QWidget* parent)
     : QWidget(parent), ui(new Ui::ClientWindow), clientCore(new ClientCore(this)),
-      chatModel(new QStandardItemModel(this))
+      chatModel(new QStandardItemModel(this)), loadingScreen(new LoadingScreen)
 {
     ui->setupUi(this);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -23,6 +23,7 @@ ClientWindow::ClientWindow(QWidget* parent)
     ui->listWidget->setFocusPolicy(Qt::NoFocus);
 
     // connect for handle signals from logic view of client
+    connect(clientCore, &ClientCore::connected, loadingScreen, &LoadingScreen::close);
     connect(clientCore, &ClientCore::connected, this, &ClientWindow::connected);
     connect(clientCore, &ClientCore::loggedIn, this, &ClientWindow::loggedIn);
     connect(clientCore, &ClientCore::loginError, this, &ClientWindow::loginError);
@@ -32,11 +33,11 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(clientCore, &ClientCore::userJoined, this, &ClientWindow::userJoined);
     connect(clientCore, &ClientCore::userLeft, this, &ClientWindow::userLeft);
     connect(clientCore, &ClientCore::informJoiner, this, &ClientWindow::informJoiner);
-    // connect to server
-    connect(ui->connectButton, &QPushButton::clicked, this, &ClientWindow::attemptConnection);
     // connect for send message
     connect(ui->sendButton, &QPushButton::clicked, this, &ClientWindow::sendMessage);
     connect(ui->messageEdit, &QLineEdit::returnPressed, this, &ClientWindow::sendMessage);
+
+    attemptConnection();
 }
 
 ClientWindow::~ClientWindow()
@@ -44,12 +45,13 @@ ClientWindow::~ClientWindow()
     delete ui;
     delete clientCore;
     delete chatModel;
+    delete loadingScreen;
 }
 
 QString ClientWindow::getTextDialog(const QString& title, const QString& label, const QString& defaultText = "")
 {
     QDialog dialog(this);
-    dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+    dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint & ~Qt::WindowMaximizeButtonHint);
     dialog.setWindowTitle(title);
     dialog.resize(300, 100);
 
@@ -62,8 +64,10 @@ QString ClientWindow::getTextDialog(const QString& title, const QString& label, 
 
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, &dialog);
     form.addRow(&buttonBox);
-    QObject::connect(&buttonBox, SIGNAL(accepted()), &dialog, SLOT(accept()));
-    QObject::connect(&buttonBox, SIGNAL(rejected()), &dialog, SLOT(reject()));
+
+    connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(&buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    connect(clientCore, &ClientCore::disconnected, &dialog, &QDialog::close);
 
     if (dialog.exec() == QDialog::Accepted) {
         return lineEdit.text();
@@ -73,12 +77,9 @@ QString ClientWindow::getTextDialog(const QString& title, const QString& label, 
 
 void ClientWindow::attemptConnection()
 {
-    QString hostAddress = getTextDialog("choose server", "address", LOCAL_HOST);
-    if (hostAddress.isEmpty()) {
-        return;
-    }
+    loadingScreen->show();
     ui->connectButton->setEnabled(false);
-    clientCore->connectToServer(QHostAddress(hostAddress), PORT);
+    clientCore->connectToServer(QHostAddress(HOST), PORT);
 }
 
 void ClientWindow::connected()
@@ -100,7 +101,6 @@ void ClientWindow::loggedIn()
     ui->sendButton->setEnabled(true);
     ui->messageEdit->setEnabled(true);
     ui->chatView->setEnabled(true);
-
     lastUserName.clear();
 }
 
@@ -214,6 +214,8 @@ void ClientWindow::disconnected()
     ui->chatView->setEnabled(false);
     ui->connectButton->setEnabled(true);
     lastUserName.clear();
+
+    attemptConnection();
 }
 
 void ClientWindow::userEventImpl(const QString& username, const QString& event)
@@ -254,59 +256,60 @@ void ClientWindow::informJoiner(const QStringList& usernames)
 void ClientWindow::error(const QAbstractSocket::SocketError socketError)
 {
     switch (socketError) {
-        case QAbstractSocket::RemoteHostClosedError:
-        case QAbstractSocket::ProxyConnectionClosedError:
-            return;
         case QAbstractSocket::ConnectionRefusedError:
-            QMessageBox::critical(this, tr("Error"), tr("The host refused the connection"));
             break;
-        case QAbstractSocket::ProxyConnectionRefusedError:
-            QMessageBox::critical(this, tr("Error"), tr("The proxy refused the connection"));
-            break;
-        case QAbstractSocket::ProxyNotFoundError:
-            QMessageBox::critical(this, tr("Error"), tr("Could not find the proxy"));
+        case QAbstractSocket::RemoteHostClosedError:
             break;
         case QAbstractSocket::HostNotFoundError:
-            QMessageBox::critical(this, tr("Error"), tr("Could not find the server"));
             break;
         case QAbstractSocket::SocketAccessError:
-            QMessageBox::critical(this, tr("Error"), tr("You don't have permissions to execute this operation"));
             break;
         case QAbstractSocket::SocketResourceError:
-            QMessageBox::critical(this, tr("Error"), tr("Too many connections opened"));
             break;
         case QAbstractSocket::SocketTimeoutError:
             QMessageBox::warning(this, tr("Error"), tr("Operation timed out"));
             return;
-        case QAbstractSocket::ProxyConnectionTimeoutError:
-            QMessageBox::critical(this, tr("Error"), tr("Proxy timed out"));
+        case QAbstractSocket::DatagramTooLargeError:
             break;
         case QAbstractSocket::NetworkError:
-            QMessageBox::critical(this, tr("Error"), tr("Unable to reach the network"));
             break;
-        case QAbstractSocket::UnknownSocketError:
-            QMessageBox::critical(this, tr("Error"), tr("An unknown error occurred"));
+        case QAbstractSocket::AddressInUseError:
+            break;
+        case QAbstractSocket::SocketAddressNotAvailableError:
             break;
         case QAbstractSocket::UnsupportedSocketOperationError:
-            QMessageBox::critical(this, tr("Error"), tr("Operation not supported"));
+            break;
+        case QAbstractSocket::UnfinishedSocketOperationError:
             break;
         case QAbstractSocket::ProxyAuthenticationRequiredError:
-            QMessageBox::critical(this, tr("Error"), tr("Your proxy requires authentication"));
+            break;
+        case QAbstractSocket::SslHandshakeFailedError:
+            break;
+        case QAbstractSocket::ProxyConnectionRefusedError:
+            break;
+        case QAbstractSocket::ProxyConnectionClosedError:
+            break;
+        case QAbstractSocket::ProxyConnectionTimeoutError:
+            break;
+        case QAbstractSocket::ProxyNotFoundError:
             break;
         case QAbstractSocket::ProxyProtocolError:
-            QMessageBox::critical(this, tr("Error"), tr("Proxy communication failed"));
             break;
-        case QAbstractSocket::TemporaryError:
         case QAbstractSocket::OperationError:
             QMessageBox::warning(this, tr("Error"), tr("Operation failed, please try again"));
             return;
+        case QAbstractSocket::SslInternalError:
+            break;
+        case QAbstractSocket::SslInvalidUserDataError:
+            break;
+        case QAbstractSocket::TemporaryError:
+            break;
         default:
             Q_UNREACHABLE();
     }
-
-    ui->connectButton->setEnabled(true);
     ui->sendButton->setEnabled(false);
     ui->messageEdit->setEnabled(false);
     ui->chatView->setEnabled(false);
     lastUserName.clear();
+    attemptConnection();
 }

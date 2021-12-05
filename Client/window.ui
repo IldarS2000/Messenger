@@ -17,11 +17,21 @@
    <item row="0" column="0">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>create group</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="connectButton">
        <property name="text">
         <string>connect group</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboBox"/>
      </item>
      <item>
       <widget class="QListWidget" name="listWidget"/>
