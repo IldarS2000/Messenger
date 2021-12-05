@@ -104,18 +104,19 @@ void ClientWindow::connected()
             QMessageBox::information(this, tr("username error"),
                                      tr("min %1 characters\nmax %2 characters")
                                              .arg(QString::number(minUserNameSize), QString::number(maxUserNameSize)));
-            continue;
         }
         if (!passwordOk) {
             QMessageBox::information(this, tr("password error"),
                                      tr("min %1 characters\nmax %2 characters")
                                              .arg(QString::number(minPasswordSize), QString::number(maxPasswordSize)));
-            continue;
         }
-        attemptLogin(username, password);
-        credentials.first.clear();
-        credentials.second.clear();
-        return;
+        if (usernameOk && passwordOk) {
+            attemptLogin(username, password);
+            credentials.first.clear();
+            credentials.second.clear();
+            return;
+        }
+        clientCore->disconnectFromHost();
     } while (true);
 }
 
