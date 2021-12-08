@@ -24,4 +24,7 @@ QString db::fetchGroupPassword(const QString& groupName)
 
 void db::addMessage(const Message& message) {}
 
-db::Message db::fetchMessages(const QString& groupName) {}
+db::Message db::fetchMessages(const QString& groupName)
+{
+    return {};
+}
