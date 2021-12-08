@@ -24,6 +24,8 @@ namespace Packet {
         constexpr const char* const SUCCESS   = "success";
         constexpr const char* const REASON    = "reason";
         constexpr const char* const USERNAMES = "usernames";
+        constexpr const char* const MESSAGES  = "messages";
+        constexpr const char* const TIME      = "time";
     } // namespace Data
 } // namespace Packet
 

@@ -36,6 +36,7 @@ private:
     void packetFromLoggedOut(ServerWorker* sender, const QJsonObject& packet);
     void packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet);
     QJsonArray getUsernames(ServerWorker* exclude) const;
+    QJsonArray getMessages() const;
     static void sendPacket(ServerWorker* destination, const QJsonObject& packet);
     static bool isEqualPacketType(const QJsonValue& jsonType, const char* strType);
 signals:

@@ -4,10 +4,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QTimer>
-#include <QSqlDatabase>
-#include <QSqlQuery>
 #include "servercore.h"
-#include "connectionpool.h"
+#include "db.h"
 #include "constants.h"
 
 ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
@@ -137,6 +135,12 @@ QJsonArray ServerCore::getUsernames(ServerWorker* const exclude) const
     return usernames;
 }
 
+QJsonArray ServerCore::getMessages() const
+{
+    QJsonArray messages;
+    return messages;
+}
+
 void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObject& packet)
 {
     Q_ASSERT(sender);
@@ -161,22 +165,12 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
     if (passwordVal.isNull() || !passwordVal.isString()) {
         return;
     }
-    const QString password = passwordVal.toString().simplified();
+    QString password = passwordVal.toString().simplified();
     if (password.isEmpty()) {
         return;
     }
-    auto conn = ConnectionPool::getConnection();
-    QSqlQuery query(conn);
-    query.exec("SELECT password from \"group\" g"
-               "where g.name = 'main'");
-    query.value("password").toString();
-    QString passwordDb;
-    while (query.next()) {
-        qDebug() << query.value("password").toString();
-        passwordDb = query.value("password").toString();
-    }
-    ConnectionPool::releaseConnection(conn);
-    if (password != "1234") {
+
+    if (password != db::fetchGroupPassword("main")) {
         QJsonObject errorPacket;
         errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
         errorPacket[Packet::Data::SUCCESS] = false;
@@ -208,6 +202,7 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
     QJsonObject unicastPacket;
     unicastPacket[Packet::Type::TYPE]      = Packet::Type::INFORM_JOINER;
     unicastPacket[Packet::Data::USERNAMES] = getUsernames(sender);
+    unicastPacket[Packet::Data::MESSAGES]  = getMessages();
     unicast(unicastPacket, sender);
 
     QJsonObject connectedBroadcastPacket;
@@ -241,4 +236,6 @@ void ServerCore::packetFromLoggedIn(ServerWorker* const sender, const QJsonObjec
     broadcastPacket[Packet::Data::TEXT]   = text;
     broadcastPacket[Packet::Data::SENDER] = sender->getUserName();
     broadcast(broadcastPacket, sender);
+
+    db::addMessage(db::Message());
 }
