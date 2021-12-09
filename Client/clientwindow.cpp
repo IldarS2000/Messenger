@@ -104,18 +104,18 @@ void ClientWindow::connected()
             QMessageBox::information(this, tr("username error"),
                                      tr("min %1 characters\nmax %2 characters")
                                              .arg(QString::number(minUserNameSize), QString::number(maxUserNameSize)));
+            continue;
         }
         if (!passwordOk) {
             QMessageBox::information(this, tr("password error"),
                                      tr("min %1 characters\nmax %2 characters")
                                              .arg(QString::number(minPasswordSize), QString::number(maxPasswordSize)));
+            continue;
         }
-        if (usernameOk && passwordOk) {
-            attemptLogin(username, password);
-            credentials.first.clear();
-            credentials.second.clear();
-            return;
-        }
+        attemptLogin(username, password);
+        credentials.first.clear();
+        credentials.second.clear();
+        return;
     } while (true);
 }
 
@@ -236,7 +236,7 @@ void ClientWindow::sendMessage()
 
 void ClientWindow::disconnected()
 {
-    QMessageBox::warning(this, tr("Disconnected"), tr("The host terminated the connection"));
+    qWarning() << "The host terminated the connection";
 
     ui->sendButton->setEnabled(false);
     ui->messageEdit->setEnabled(false);
@@ -285,56 +285,78 @@ void ClientWindow::error(const QAbstractSocket::SocketError socketError)
 {
     switch (socketError) {
         case QAbstractSocket::ConnectionRefusedError:
+            qWarning() << "ConnectionRefusedError";
             break;
         case QAbstractSocket::RemoteHostClosedError:
+            qWarning() << "RemoteHostClosedError";
             break;
         case QAbstractSocket::HostNotFoundError:
+            qWarning() << "HostNotFoundError";
             break;
         case QAbstractSocket::SocketAccessError:
+            qWarning() << "SocketAccessError";
             break;
         case QAbstractSocket::SocketResourceError:
+            qWarning() << "SocketResourceError";
             break;
         case QAbstractSocket::SocketTimeoutError:
-            QMessageBox::warning(this, tr("Error"), tr("Operation timed out"));
+            qWarning() << "SocketTimeoutError";
             return;
         case QAbstractSocket::DatagramTooLargeError:
+            qWarning() << "DatagramTooLargeError";
             break;
         case QAbstractSocket::NetworkError:
+            qWarning() << "NetworkError";
             break;
         case QAbstractSocket::AddressInUseError:
+            qWarning() << "AddressInUseError";
             break;
         case QAbstractSocket::SocketAddressNotAvailableError:
+            qWarning() << "SocketAddressNotAvailableError";
             break;
         case QAbstractSocket::UnsupportedSocketOperationError:
+            qWarning() << "UnsupportedSocketOperationError";
             break;
         case QAbstractSocket::UnfinishedSocketOperationError:
+            qWarning() << "UnfinishedSocketOperationError";
             break;
         case QAbstractSocket::ProxyAuthenticationRequiredError:
+            qWarning() << "ProxyAuthenticationRequiredError";
             break;
         case QAbstractSocket::SslHandshakeFailedError:
+            qWarning() << "SslHandshakeFailedError";
             break;
         case QAbstractSocket::ProxyConnectionRefusedError:
+            qWarning() << "ProxyConnectionRefusedError";
             break;
         case QAbstractSocket::ProxyConnectionClosedError:
+            qWarning() << "ProxyConnectionClosedError";
             break;
         case QAbstractSocket::ProxyConnectionTimeoutError:
+            qWarning() << "ProxyConnectionTimeoutError";
             break;
         case QAbstractSocket::ProxyNotFoundError:
+            qWarning() << "ProxyNotFoundError";
             break;
         case QAbstractSocket::ProxyProtocolError:
+            qWarning() << "ProxyProtocolError";
             break;
         case QAbstractSocket::OperationError:
-            QMessageBox::warning(this, tr("Error"), tr("Operation failed, please try again"));
+            qWarning() << "OperationError";
             return;
         case QAbstractSocket::SslInternalError:
+            qWarning() << "SslInternalError";
             break;
         case QAbstractSocket::SslInvalidUserDataError:
+            qWarning() << "SslInvalidUserDataError";
             break;
         case QAbstractSocket::TemporaryError:
+            qWarning() << "TemporaryError";
             break;
         default:
             Q_UNREACHABLE();
     }
+
     ui->sendButton->setEnabled(false);
     ui->messageEdit->setEnabled(false);
     ui->chatView->setEnabled(false);
