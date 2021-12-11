@@ -13,7 +13,7 @@
 
 ClientWindow::ClientWindow(QWidget* parent)
     : QWidget(parent), ui(new Ui::ClientWindow), clientCore(new ClientCore(this)),
-      chatModel(new QStandardItemModel(this)), loadingScreen(new LoadingScreen)
+      chatModel(new QStandardItemModel(this)), loadingScreen(new LoadingScreen), logged(false)
 {
     ui->setupUi(this);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
@@ -38,7 +38,7 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(ui->sendButton, &QPushButton::clicked, this, &ClientWindow::sendMessage);
     connect(ui->messageEdit, &QLineEdit::returnPressed, this, &ClientWindow::sendMessage);
 
-    attemptConnection();
+    QTimer::singleShot(100, this, [this]() { this->attemptConnection(); });
 }
 
 ClientWindow::~ClientWindow()
@@ -131,6 +131,7 @@ void ClientWindow::loggedIn()
     ui->chatView->setEnabled(true);
     QTimer::singleShot(0, ui->messageEdit, SLOT(setFocus()));
     lastUserName.clear();
+    logged = true;
 }
 
 void ClientWindow::loginError(const QString& reason)
@@ -243,8 +244,12 @@ void ClientWindow::disconnected()
     ui->messageEdit->setEnabled(false);
     ui->chatView->setEnabled(false);
     lastUserName.clear();
-
-    attemptConnection();
+    logged = false;
+    chatModel->removeRows(0, chatModel->rowCount());
+    ui->users->clear();
+    if (isVisible()) {
+        attemptConnection();
+    }
 }
 
 void ClientWindow::userEventImpl(const QString& username, const QString& event)
@@ -261,8 +266,10 @@ void ClientWindow::userEventImpl(const QString& username, const QString& event)
 
 void ClientWindow::userJoined(const QString& username)
 {
-    userEventImpl(username, "joined the group");
-    ui->users->addItem(username);
+    if (logged) {
+        userEventImpl(username, "joined the group");
+        ui->users->addItem(username);
+    }
 }
 
 void ClientWindow::userLeft(const QString& username)
@@ -365,5 +372,10 @@ void ClientWindow::error(const QAbstractSocket::SocketError socketError)
     ui->messageEdit->setEnabled(false);
     ui->chatView->setEnabled(false);
     lastUserName.clear();
-    attemptConnection();
+    logged = false;
+    chatModel->removeRows(0, chatModel->rowCount());
+    ui->users->clear();
+    if (isVisible()) {
+        attemptConnection();
+    }
 }

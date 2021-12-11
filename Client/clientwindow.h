@@ -26,6 +26,7 @@ private:
     QStandardItemModel* chatModel;
     QString lastUserName;
     LoadingScreen* loadingScreen;
+    bool logged;
     static constexpr int minWindowWidth    = 750;
     static constexpr int minWindowHeight   = 500;
     static constexpr int maxMessageRowSize = 50;

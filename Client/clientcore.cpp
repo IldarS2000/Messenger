@@ -7,7 +7,7 @@
 #include "clientcore.h"
 #include "constants.h"
 
-ClientCore::ClientCore(QObject* parent) : QObject(parent), clientSocket(new QSslSocket(this)), logged(false)
+ClientCore::ClientCore(QObject* parent) : QObject(parent), clientSocket(new QSslSocket(this))
 {
 #ifdef SSL_ENABLE
     clientSocket->setProtocol(QSsl::SslV3);
@@ -25,7 +25,6 @@ ClientCore::ClientCore(QObject* parent) : QObject(parent), clientSocket(new QSsl
 
     connect(clientSocket, &QSslSocket::connected, this, &ClientCore::connected);
     connect(clientSocket, &QSslSocket::disconnected, this, &ClientCore::disconnected);
-    connect(clientSocket, &QSslSocket::disconnected, this, [this]() -> void { logged = false; });
 
     connect(clientSocket, &QSslSocket::readyRead, this, &ClientCore::onReadyRead);
     connect(clientSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
@@ -85,9 +84,6 @@ bool ClientCore::isEqualPacketType(const QJsonValue& jsonType, const char* const
 
 void ClientCore::handleLoginPacket(const QJsonObject& packet)
 {
-    if (logged) {
-        return;
-    }
     const QJsonValue successVal = packet.value(QLatin1String(Packet::Data::SUCCESS));
     if (successVal.isNull() || !successVal.isBool()) {
         return;

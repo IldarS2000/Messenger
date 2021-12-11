@@ -36,7 +36,6 @@ signals:
 private:
     QSslSocket* clientSocket;
     QString name;
-    bool logged;
 
 private:
     void packetReceived(const QJsonObject& packet);
