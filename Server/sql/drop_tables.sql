@@ -1,3 +1,3 @@
-drop table "Messenger".public.user;
-drop table "Messenger".public.group;
-drop table "Messenger".public.message;
+drop table "message";
+drop table "user";
+drop table "group";

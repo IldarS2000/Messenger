@@ -1,8 +1,8 @@
 select *
-from "Messenger".public.user;
+from "user";
 
 select *
-from "Messenger".public.group;
+from "group";
 
 select *
-from "Messenger".public.message;
+from "message";
