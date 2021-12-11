@@ -7,6 +7,7 @@
 #include "servercore.h"
 #include "db.h"
 #include "constants.h"
+#include "message.h"
 
 ServerCore::ServerCore(QObject* parent) : QTcpServer(parent), idealThreadCount(qMax(QThread::idealThreadCount(), 1))
 {
@@ -129,15 +130,26 @@ QJsonArray ServerCore::getUsernames(ServerWorker* const exclude) const
     for (ServerWorker* worker : clients) {
         Q_ASSERT(worker);
         if (worker != exclude) {
-            usernames.push_back(worker->getUserName());
+            QString username = worker->getUserName();
+            if (!username.isEmpty()) {
+                usernames.push_back(qMove(username));
+            }
         }
     }
     return usernames;
 }
 
-QJsonArray ServerCore::getMessages() const
+QJsonArray ServerCore::getMessages()
 {
+    QList<Message> dbMessages = db::fetchMessages("main");
     QJsonArray messages;
+    for (const auto& message : dbMessages) {
+        QJsonObject leafObject;
+        leafObject[Packet::Data::SENDER] = message.getSender();
+        leafObject[Packet::Data::TEXT]   = message.getMessage();
+        leafObject[Packet::Data::TIME]   = message.getTime();
+        messages.push_back(leafObject);
+    }
     return messages;
 }
 
@@ -222,6 +234,15 @@ void ServerCore::packetFromLoggedIn(ServerWorker* const sender, const QJsonObjec
         return;
     }
 
+    const QJsonValue senderVal = packet.value(QLatin1String(Packet::Data::SENDER));
+    if (senderVal.isNull() || !senderVal.isString()) {
+        return;
+    }
+    const QString senderName = senderVal.toString();
+    if (senderName.isEmpty()) {
+        return;
+    }
+
     const QJsonValue textVal = packet.value(QLatin1String(Packet::Data::TEXT));
     if (textVal.isNull() || !textVal.isString()) {
         return;
@@ -231,11 +252,21 @@ void ServerCore::packetFromLoggedIn(ServerWorker* const sender, const QJsonObjec
         return;
     }
 
+    const QJsonValue timeVal = packet.value(QLatin1String(Packet::Data::TIME));
+    if (timeVal.isNull() || !timeVal.isString()) {
+        return;
+    }
+    const QString time = timeVal.toString();
+    if (time.isEmpty()) {
+        return;
+    }
+
     QJsonObject broadcastPacket;
     broadcastPacket[Packet::Type::TYPE]   = Packet::Type::MESSAGE;
-    broadcastPacket[Packet::Data::TEXT]   = text;
     broadcastPacket[Packet::Data::SENDER] = sender->getUserName();
+    broadcastPacket[Packet::Data::TEXT]   = text;
+    broadcastPacket[Packet::Data::TIME]   = time;
     broadcast(broadcastPacket, sender);
 
-    db::addMessage(db::Message());
+    db::addMessage({senderName, text, time});
 }

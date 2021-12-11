@@ -48,6 +48,7 @@ void ClientCore::connectToServer(const QHostAddress& address, const quint16 port
 void ClientCore::login(const QString& username, const QString& password)
 {
     if (clientSocket->state() == QAbstractSocket::ConnectedState) {
+        this->name = username;
         QDataStream clientStream(clientSocket);
         clientStream.setVersion(serializerVersion);
 
@@ -59,14 +60,16 @@ void ClientCore::login(const QString& username, const QString& password)
     }
 }
 
-void ClientCore::sendMessage(const QString& message)
+void ClientCore::sendMessage(const QString& message, const QString& time)
 {
     QDataStream clientStream(clientSocket);
     clientStream.setVersion(serializerVersion);
 
     QJsonObject packet;
-    packet[Packet::Type::TYPE] = Packet::Type::MESSAGE;
-    packet[Packet::Data::TEXT] = message;
+    packet[Packet::Type::TYPE]   = Packet::Type::MESSAGE;
+    packet[Packet::Data::SENDER] = name;
+    packet[Packet::Data::TEXT]   = message;
+    packet[Packet::Data::TIME]   = time;
     clientStream << QJsonDocument(packet).toJson();
 }
 
@@ -100,15 +103,19 @@ void ClientCore::handleLoginPacket(const QJsonObject& packet)
 
 void ClientCore::handleMessagePacket(const QJsonObject& packet)
 {
-    const QJsonValue textVal = packet.value(QLatin1String(Packet::Data::TEXT));
-    if (textVal.isNull() || !textVal.isString()) {
-        return;
-    }
     const QJsonValue senderVal = packet.value(QLatin1String(Packet::Data::SENDER));
     if (senderVal.isNull() || !senderVal.isString()) {
         return;
     }
-    emit messageReceived(senderVal.toString(), textVal.toString());
+    const QJsonValue textVal = packet.value(QLatin1String(Packet::Data::TEXT));
+    if (textVal.isNull() || !textVal.isString()) {
+        return;
+    }
+    const QJsonValue timeVal = packet.value(QLatin1String(Packet::Data::TIME));
+    if (timeVal.isNull() || !timeVal.isString()) {
+        return;
+    }
+    emit messageReceived({senderVal.toString(), textVal.toString(), timeVal.toString()});
 }
 
 void ClientCore::handleUserJoinedPacket(const QJsonObject& packet)
@@ -140,7 +147,22 @@ void ClientCore::handleInformJoinerPacket(const QJsonObject& packet)
     for (const auto& jsonUsername : jsonUsernames) {
         usernames.push_back(jsonUsername.toString());
     }
-    emit informJoiner(usernames);
+
+    const QJsonValue messagesVal = packet.value(QLatin1String(Packet::Data::MESSAGES));
+    if (messagesVal.isNull() || !messagesVal.isArray()) {
+        return;
+    }
+
+    QJsonArray jsonMessages = messagesVal.toArray();
+    QList<Message> messages;
+    for (const auto& jsonMessage : jsonMessages) {
+        QJsonObject obj = jsonMessage.toObject();
+        QString sender  = obj[Packet::Data::SENDER].toString();
+        QString text    = obj[Packet::Data::TEXT].toString();
+        QString time    = obj[Packet::Data::TIME].toString();
+        messages.push_back({sender, text, time});
+    }
+    emit informJoiner(usernames, messages);
 }
 
 void ClientCore::packetReceived(const QJsonObject& packet)

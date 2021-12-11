@@ -180,12 +180,12 @@ QStringList ClientWindow::splitText(const QString& text)
     return rows;
 }
 
-void ClientWindow::displayMessage(const QString& message, const int lastRowNumber, const int alignMask)
+void ClientWindow::displayMessage(const QString& message, const QString& time, const int lastRowNumber,
+                                  const int alignMask)
 {
     QStringList rows    = splitText(message);
     const int rowsCount = rows.size();
     int currentRow      = lastRowNumber;
-    const QString time  = QDateTime::currentDateTime().toString("hh:mm");
     for (int i = 0; i < rowsCount; ++i) {
         chatModel->insertRow(currentRow);
         if (i == rowsCount - 1) {
@@ -199,23 +199,23 @@ void ClientWindow::displayMessage(const QString& message, const int lastRowNumbe
     }
 }
 
-void ClientWindow::messageReceived(const QString& sender, const QString& message)
+void ClientWindow::messageReceived(const Message& message)
 {
     int currentRow = chatModel->rowCount();
-    if (lastUserName != sender) {
-        lastUserName = sender;
+    if (lastUserName != message.getSender()) {
+        lastUserName = message.getSender();
 
         QFont boldFont;
         boldFont.setBold(true);
 
         chatModel->insertRow(currentRow);
-        chatModel->setData(chatModel->index(currentRow, 0), sender);
+        chatModel->setData(chatModel->index(currentRow, 0), message.getSender());
         chatModel->setData(chatModel->index(currentRow, 0), int(Qt::AlignLeft | Qt::AlignVCenter),
                            Qt::TextAlignmentRole);
         chatModel->setData(chatModel->index(currentRow, 0), boldFont, Qt::FontRole);
         ++currentRow;
     }
-    displayMessage(message, currentRow, Qt::AlignLeft);
+    displayMessage(message.getMessage(), message.getTime(), currentRow, Qt::AlignLeft);
 }
 
 void ClientWindow::sendMessage()
@@ -224,10 +224,11 @@ void ClientWindow::sendMessage()
     if (message.isEmpty() || message.size() > maxMessageSize) {
         return;
     }
-    clientCore->sendMessage(message);
+    const QString time = QDateTime::currentDateTime().toString("hh:mm");
+    clientCore->sendMessage(message, time);
 
     int currentRow = chatModel->rowCount();
-    displayMessage(message, currentRow, Qt::AlignRight);
+    displayMessage(message, time, currentRow, Qt::AlignRight);
 
     ui->messageEdit->clear();
     ui->chatView->scrollToBottom();
@@ -274,10 +275,13 @@ void ClientWindow::userLeft(const QString& username)
     delete items.at(0);
 }
 
-void ClientWindow::informJoiner(const QStringList& usernames)
+void ClientWindow::informJoiner(const QStringList& usernames, const QList<Message>& messages)
 {
     for (const auto& username : usernames) {
         ui->users->addItem(username);
+    }
+    for (const auto& message : messages) {
+        messageReceived(message);
     }
 }
 

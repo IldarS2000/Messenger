@@ -6,6 +6,7 @@
 #include <QStandardItemModel>
 #include "clientcore.h"
 #include "loadingscreen.h"
+#include "message.h"
 
 namespace Ui {
     class ClientWindow;
@@ -39,19 +40,19 @@ private slots:
     void attemptLogin(const QString& username, const QString& password);
     void loggedIn();
     void loginError(const QString& reason);
-    void messageReceived(const QString& sender, const QString& message);
+    void messageReceived(const Message& message);
     void sendMessage();
     void disconnected();
     void userJoined(const QString& username);
     void userLeft(const QString& username);
-    void informJoiner(const QStringList& usernames);
+    void informJoiner(const QStringList& usernames, const QList<Message>& messages);
     void error(QAbstractSocket::SocketError socketError);
 
 private:
     QPair<QString, QString> getConnectionCredentials();
     static QStringList splitString(const QString& str, int rowSize);
     static QStringList splitText(const QString& text);
-    void displayMessage(const QString& message, int lastRowNumber, int alignMask);
+    void displayMessage(const QString& message, const QString& time, int lastRowNumber, int alignMask);
     void userEventImpl(const QString& username, const QString& event);
 };
 
