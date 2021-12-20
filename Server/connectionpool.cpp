@@ -59,7 +59,7 @@ QSqlDatabase ConnectionPool::getConnection()
 
 void ConnectionPool::releaseConnection(const QSqlDatabase& connection)
 {
-    ConnectionPool& pool   = ConnectionPool ::getInstance();
+    ConnectionPool& pool   = ConnectionPool::getInstance();
     QString connectionName = connection.connectionName();
     if (pool.usedConnectionNames.contains(connectionName)) {
         QMutexLocker locker(&mutex);
