@@ -222,6 +222,16 @@ void ServerCore::loginUser(ServerWorker* const sender, const QJsonObject& packet
         return;
     }
 
+    // check user
+    if (!db::isUserExist(userName)) {
+        QJsonObject errorPacket;
+        errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
+        errorPacket[Packet::Data::SUCCESS] = false;
+        errorPacket[Packet::Data::REASON]  = "user with such name does not exist";
+        sendPacket(sender, errorPacket);
+        return;
+    }
+
     // parse password
     QJsonValue passwordVal = packet.value(QLatin1String(Packet::Data::PASSWORD));
     if (passwordVal.isNull() || !passwordVal.isString()) {

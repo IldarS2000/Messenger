@@ -1,3 +1,4 @@
+#include <QMessageBox>
 #include "register.h"
 #include "ui_Register.h"
 #include "constants.h"
@@ -10,7 +11,6 @@ Register::Register(QWidget* parent) : QWidget(parent), ui(new Ui::Register)
     ui->password1Line->setEchoMode(QLineEdit::Password);
     ui->password2Line->setEchoMode(QLineEdit::Password);
 
-    connect(ui->signUpButton, &QPushButton::clicked, this, &Register::saveState);
     connect(ui->signUpButton, &QPushButton::clicked, this, &Register::signUpClicked);
 }
 
@@ -101,5 +101,21 @@ void Register::saveState()
 
 void Register::signUpClicked()
 {
+    saveState();
+    if (!isValidName(name)) {
+        QMessageBox::warning(this, tr("Error"), tr("name can contain only letters and cannot be more than 32 symbols"));
+        return;
+    }
+    if (!isValidDurablePassword(password)) {
+        QMessageBox::warning(this, tr("Error"),
+                             tr("password is too weak, password should contain A-Z, a-z, 0-9 and should be not "
+                                "less than 8 symbols and cannot be more than 32 symbols"));
+        return;
+    }
+    if (password != ui->password2Line->text()) {
+        QMessageBox::warning(this, tr("Error"), tr("passwords not equal"));
+        return;
+    }
+
     emit signUpSig();
 }

@@ -26,9 +26,11 @@ public:
 protected:
     void closeEvent(QCloseEvent* event) override;
 
+private:
+    void saveState();
+
 private slots:
     void signUpClicked();
-    void saveState();
 
 signals:
     void signUpSig();

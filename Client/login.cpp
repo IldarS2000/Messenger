@@ -28,6 +28,7 @@ QString Login::getPassword() const
 
 void Login::signInClicked()
 {
+    saveState();
     emit signInSig();
 }
 
