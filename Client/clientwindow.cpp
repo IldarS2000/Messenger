@@ -43,6 +43,7 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(ui->messageEdit, &QLineEdit::returnPressed, this, &ClientWindow::sendMessage);
     // connect for login
     connect(loginWindow, &Login::signInSig, this, &ClientWindow::signInClicked);
+    connect(loginWindow, &Login::signUpSig, this, &ClientWindow::signUpClicked);
 
     // try connect
     QTimer::singleShot(100, this, [this]() { this->attemptConnection(); });
@@ -109,12 +110,19 @@ void ClientWindow::attemptLogin(const QString& username, const QString& password
 
 void ClientWindow::loggedIn()
 {
+    // enable main window ui
     ui->sendButton->setEnabled(true);
     ui->messageEdit->setEnabled(true);
     ui->chatView->setEnabled(true);
     QTimer::singleShot(0, ui->messageEdit, SLOT(setFocus()));
+
+    // update for logged state
     lastUserName.clear();
     logged = true;
+
+    // close login window
+    disconnect(loginWindow, &Login::closeSig, this, &QWidget::close);
+    loginWindow->close();
 }
 
 void ClientWindow::loginError(const QString& reason)
@@ -369,4 +377,9 @@ void ClientWindow::signInClicked()
     const QString password = loginWindow->getPassword();
     attemptLogin(userName, password);
     loginWindow->clearState(); // for security reason clear sensitive info
+}
+
+void ClientWindow::signUpClicked()
+{
+    registerWindow->show();
 }

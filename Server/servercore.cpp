@@ -88,7 +88,8 @@ void ServerCore::packetReceived(ServerWorker* sender, const QJsonObject& packet)
 
     const QString& userName = sender->getUserName();
     if (userName.isEmpty()) {
-        return packetFromLoggedOut(sender, packet);
+        packetFromLoggedOut(sender, packet);
+        return;
     }
     packetFromLoggedIn(sender, packet);
 }
@@ -103,7 +104,7 @@ void ServerCore::userDisconnected(ServerWorker* const sender, const int threadId
         packet[Packet::Type::TYPE]     = Packet::Type::USER_LEFT;
         packet[Packet::Data::USERNAME] = userName;
         broadcast(packet, nullptr);
-        qInfo() << qPrintable(userName + QString(" disconnectedSig"));
+        qInfo() << qPrintable(userName + QString(" disconnected"));
     }
     sender->deleteLater();
 }
@@ -156,6 +157,7 @@ QJsonArray ServerCore::getMessages()
 void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObject& packet)
 {
     Q_ASSERT(sender);
+    // check packet type
     const QJsonValue typeVal = packet.value(QLatin1String(Packet::Type::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
@@ -164,16 +166,18 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
         return;
     }
 
+    // parse username
     const QJsonValue usernameVal = packet.value(QLatin1String(Packet::Data::USERNAME));
     if (usernameVal.isNull() || !usernameVal.isString()) {
         return;
     }
-    const QString newUserName = usernameVal.toString().simplified();
-    if (newUserName.isEmpty()) {
+    const QString userName = usernameVal.toString().simplified();
+    if (userName.isEmpty()) {
         return;
     }
 
-    const QJsonValue passwordVal = packet.value(QLatin1String(Packet::Data::PASSWORD));
+    // parse password
+    QJsonValue passwordVal = packet.value(QLatin1String(Packet::Data::PASSWORD));
     if (passwordVal.isNull() || !passwordVal.isString()) {
         return;
     }
@@ -182,7 +186,8 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
         return;
     }
 
-    if (password != db::fetchGroupPassword("main")) {
+    // check password
+    if (password != db::fetchUserPassword(userName)) {
         QJsonObject errorPacket;
         errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
         errorPacket[Packet::Data::SUCCESS] = false;
@@ -190,36 +195,42 @@ void ServerCore::packetFromLoggedOut(ServerWorker* const sender, const QJsonObje
         sendPacket(sender, errorPacket);
         return;
     }
+    // for security reason clear sensitive info
+    passwordVal = QJsonValue();
+    password.clear();
 
-    for (ServerWorker* worker : qAsConst(clients)) {
-        if (worker == sender) {
-            continue;
-        }
-        if (worker->getUserName().compare(newUserName, Qt::CaseInsensitive) == 0) {
-            QJsonObject errorPacket;
-            errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
-            errorPacket[Packet::Data::SUCCESS] = false;
-            errorPacket[Packet::Data::REASON]  = "duplicate username";
-            sendPacket(sender, errorPacket);
-            return;
-        }
-    }
+//    for (ServerWorker* worker : qAsConst(clients)) {
+//        if (worker == sender) {
+//            continue;
+//        }
+//        if (worker->getUserName().compare(newUserName, Qt::CaseInsensitive) == 0) {
+//            QJsonObject errorPacket;
+//            errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
+//            errorPacket[Packet::Data::SUCCESS] = false;
+//            errorPacket[Packet::Data::REASON]  = "duplicate username";
+//            sendPacket(sender, errorPacket);
+//            return;
+//        }
+//    }
 
-    sender->setUserName(newUserName);
+    // login success
+    sender->setUserName(userName);
     QJsonObject successPacket;
     successPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
     successPacket[Packet::Data::SUCCESS] = true;
     sendPacket(sender, successPacket);
 
+    // send all messages to user
     QJsonObject unicastPacket;
     unicastPacket[Packet::Type::TYPE]      = Packet::Type::INFORM_JOINER;
     unicastPacket[Packet::Data::USERNAMES] = getUsernames(sender);
     unicastPacket[Packet::Data::MESSAGES]  = getMessages();
     unicast(unicastPacket, sender);
 
+    // user joined broadcast
     QJsonObject connectedBroadcastPacket;
     connectedBroadcastPacket[Packet::Type::TYPE]     = Packet::Type::USER_JOINED;
-    connectedBroadcastPacket[Packet::Data::USERNAME] = newUserName;
+    connectedBroadcastPacket[Packet::Data::USERNAME] = userName;
     broadcast(connectedBroadcastPacket, sender);
 }
 

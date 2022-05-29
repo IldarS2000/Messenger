@@ -27,10 +27,12 @@ protected:
 
 private slots:
     void signInClicked();
+    void signUpClicked();
     void saveState();
 
 signals:
     void signInSig();
+    void signUpSig();
     void closeSig();
 
 private:

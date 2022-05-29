@@ -61,6 +61,7 @@ private:
     void userEventImpl(const QString& username, const QString& event);
 
     void signInClicked();
+    void signUpClicked();
 };
 
 #endif // CLIENT_WINDOW_H

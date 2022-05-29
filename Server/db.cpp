@@ -5,6 +5,40 @@
 #include "connectionpool.h"
 #include "db.h"
 
+bool db::isUserExist(const QString& userName)
+{
+    auto conn = ConnectionPool::getConnection();
+    QSqlQuery query(conn);
+    query.prepare(R"(select id from "Messenger".public.user where "name" = :name)");
+    query.bindValue(":name", userName);
+    query.exec();
+
+    int id = 0;
+    while (query.next()) {
+        id = query.value("id").toInt();
+    }
+    ConnectionPool::releaseConnection(conn);
+
+    return id != 0;
+}
+
+QString db::fetchUserPassword(const QString& userName)
+{
+    auto conn = ConnectionPool::getConnection();
+    QSqlQuery query(conn);
+    query.prepare(R"(select password from "Messenger".public.user where "name" = :name)");
+    query.bindValue(":name", userName);
+    query.exec();
+
+    QString password;
+    while (query.next()) {
+        password = query.value("password").toString();
+    }
+    ConnectionPool::releaseConnection(conn);
+
+    return password;
+}
+
 QString db::fetchGroupPassword(const QString& groupName)
 {
     auto conn = ConnectionPool::getConnection();

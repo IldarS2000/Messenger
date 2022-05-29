@@ -5,8 +5,10 @@ Login::Login(QWidget* parent) : QWidget(parent), ui(new Ui::Login)
 {
     ui->setupUi(this);
     setWindowModality(Qt::ApplicationModal);
+    ui->passwordLine->setEchoMode(QLineEdit::Password);
     connect(ui->signInButton, &QPushButton::clicked, this, &Login::saveState);
     connect(ui->signInButton, &QPushButton::clicked, this, &Login::signInClicked);
+    connect(ui->signUpButton, &QPushButton::clicked, this, &Login::signUpClicked);
 }
 
 Login::~Login()
@@ -77,6 +79,11 @@ bool Login::isValidDurablePassword(const QString& password)
 void Login::signInClicked()
 {
     emit signInSig();
+}
+
+void Login::signUpClicked()
+{
+    emit signUpSig();
 }
 
 void Login::closeEvent(QCloseEvent* event)
