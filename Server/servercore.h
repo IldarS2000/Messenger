@@ -40,7 +40,7 @@ private:
     static void sendPacket(ServerWorker* destination, const QJsonObject& packet);
     static bool isEqualPacketType(const QJsonValue& jsonType, const char* strType);
 signals:
-    void stopAllClients();
+    void stopAllClientsSig();
 };
 
 #endif // SERVER_CORE_H

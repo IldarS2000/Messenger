@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QAbstractSocket>
 #include <QStandardItemModel>
+#include "login.h"
+#include "register.h"
 #include "clientcore.h"
 #include "loadingscreen.h"
 #include "message.h"
@@ -25,6 +27,8 @@ private:
     ClientCore* clientCore;
     QStandardItemModel* chatModel;
     QString lastUserName;
+    Login* loginWindow;
+    Register* registerWindow;
     LoadingScreen* loadingScreen;
     bool logged;
     static constexpr int minWindowWidth    = 750;
@@ -55,6 +59,8 @@ private:
     static QStringList splitText(const QString& text);
     void displayMessage(const QString& message, const QString& time, int lastRowNumber, int alignMask);
     void userEventImpl(const QString& username, const QString& event);
+
+    void signInClicked();
 };
 
 #endif // CLIENT_WINDOW_H

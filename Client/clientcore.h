@@ -23,15 +23,15 @@ public slots:
 private slots:
     void onReadyRead();
 signals:
-    void connected();
-    void disconnected();
-    void loggedIn();
-    void loginError(const QString& reason);
-    void messageReceived(const Message& message);
-    void error(QAbstractSocket::SocketError socketError);
-    void userJoined(const QString& username);
-    void userLeft(const QString& username);
-    void informJoiner(const QStringList& usernames, const QList<Message>& messages);
+    void connectedSig();
+    void disconnectedSig();
+    void loggedInSig();
+    void loginErrorSig(const QString& reason);
+    void messageReceivedSig(const Message& message);
+    void errorSig(QAbstractSocket::SocketError socketError);
+    void userJoinedSig(const QString& username);
+    void userLeftSig(const QString& username);
+    void informJoinerSig(const QStringList& usernames, const QList<Message>& messages);
 
 private:
     QSslSocket* clientSocket;

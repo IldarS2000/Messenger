@@ -8,13 +8,17 @@
 #include <QDateTime>
 #include <QTimer>
 #include "ui_window.h"
+#include "login.h"
+#include "register.h"
 #include "clientwindow.h"
 #include "constants.h"
 
 ClientWindow::ClientWindow(QWidget* parent)
     : QWidget(parent), ui(new Ui::ClientWindow), clientCore(new ClientCore(this)),
-      chatModel(new QStandardItemModel(this)), loadingScreen(new LoadingScreen), logged(false)
+      chatModel(new QStandardItemModel(this)), loadingScreen(new LoadingScreen), logged(false), loginWindow(new Login),
+      registerWindow(new Register)
 {
+    // ui setup
     ui->setupUi(this);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     setMinimumSize(minWindowWidth, minWindowHeight);
@@ -23,21 +27,24 @@ ClientWindow::ClientWindow(QWidget* parent)
     ui->chatView->setModel(chatModel);
     ui->users->setFocusPolicy(Qt::NoFocus);
 
-    // connect for handle signals from logic view of client
-    connect(clientCore, &ClientCore::connected, loadingScreen, &LoadingScreen::close);
-    connect(clientCore, &ClientCore::connected, this, &ClientWindow::connected);
-    connect(clientCore, &ClientCore::loggedIn, this, &ClientWindow::loggedIn);
-    connect(clientCore, &ClientCore::loginError, this, &ClientWindow::loginError);
-    connect(clientCore, &ClientCore::messageReceived, this, &ClientWindow::messageReceived);
-    connect(clientCore, &ClientCore::disconnected, this, &ClientWindow::disconnected);
-    connect(clientCore, &ClientCore::error, this, &ClientWindow::error);
-    connect(clientCore, &ClientCore::userJoined, this, &ClientWindow::userJoined);
-    connect(clientCore, &ClientCore::userLeft, this, &ClientWindow::userLeft);
-    connect(clientCore, &ClientCore::informJoiner, this, &ClientWindow::informJoiner);
+    // connect ui and client core
+    connect(clientCore, &ClientCore::connectedSig, loadingScreen, &LoadingScreen::close);
+    connect(clientCore, &ClientCore::connectedSig, this, &ClientWindow::connected);
+    connect(clientCore, &ClientCore::loggedInSig, this, &ClientWindow::loggedIn);
+    connect(clientCore, &ClientCore::loginErrorSig, this, &ClientWindow::loginError);
+    connect(clientCore, &ClientCore::messageReceivedSig, this, &ClientWindow::messageReceived);
+    connect(clientCore, &ClientCore::disconnectedSig, this, &ClientWindow::disconnected);
+    connect(clientCore, &ClientCore::errorSig, this, &ClientWindow::error);
+    connect(clientCore, &ClientCore::userJoinedSig, this, &ClientWindow::userJoined);
+    connect(clientCore, &ClientCore::userLeftSig, this, &ClientWindow::userLeft);
+    connect(clientCore, &ClientCore::informJoinerSig, this, &ClientWindow::informJoiner);
     // connect for send message
     connect(ui->sendButton, &QPushButton::clicked, this, &ClientWindow::sendMessage);
     connect(ui->messageEdit, &QLineEdit::returnPressed, this, &ClientWindow::sendMessage);
+    // connect for login
+    connect(loginWindow, &Login::signInSig, this, &ClientWindow::signInClicked);
 
+    // try connect
     QTimer::singleShot(100, this, [this]() { this->attemptConnection(); });
 }
 
@@ -47,6 +54,8 @@ ClientWindow::~ClientWindow()
     delete clientCore;
     delete chatModel;
     delete loadingScreen;
+    delete loginWindow;
+    delete registerWindow;
 }
 
 QPair<QString, QString> ClientWindow::getConnectionCredentials()
@@ -73,7 +82,7 @@ QPair<QString, QString> ClientWindow::getConnectionCredentials()
 
     connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     connect(&buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-    connect(clientCore, &ClientCore::disconnected, &dialog, &QDialog::close);
+    connect(clientCore, &ClientCore::disconnectedSig, &dialog, &QDialog::close);
 
     if (dialog.exec() == QDialog::Accepted) {
         return {usernameLineEdit.text(), passwordLineEdit.text()};
@@ -89,34 +98,8 @@ void ClientWindow::attemptConnection()
 
 void ClientWindow::connected()
 {
-    QPair<QString, QString> credentials;
-    bool usernameOk;
-    bool passwordOk;
-    do {
-        credentials             = getConnectionCredentials();
-        const QString& username = credentials.first;
-        const QString& password = credentials.second;
-        usernameOk =
-                (!username.isEmpty() && (username.size() >= minUserNameSize && username.size() <= maxUserNameSize));
-        passwordOk =
-                (!password.isEmpty() && (password.size() >= minPasswordSize && password.size() <= maxPasswordSize));
-        if (!usernameOk) {
-            QMessageBox::information(this, tr("username error"),
-                                     tr("min %1 characters\nmax %2 characters")
-                                             .arg(QString::number(minUserNameSize), QString::number(maxUserNameSize)));
-            continue;
-        }
-        if (!passwordOk) {
-            QMessageBox::information(this, tr("password error"),
-                                     tr("min %1 characters\nmax %2 characters")
-                                             .arg(QString::number(minPasswordSize), QString::number(maxPasswordSize)));
-            continue;
-        }
-        attemptLogin(username, password);
-        credentials.first.clear();
-        credentials.second.clear();
-        return;
-    } while (true);
+    loginWindow->show();
+    connect(loginWindow, &Login::closeSig, this, &QWidget::close);
 }
 
 void ClientWindow::attemptLogin(const QString& username, const QString& password)
@@ -378,4 +361,12 @@ void ClientWindow::error(const QAbstractSocket::SocketError socketError)
     if (isVisible()) {
         attemptConnection();
     }
+}
+
+void ClientWindow::signInClicked()
+{
+    const QString userName = loginWindow->getName();
+    const QString password = loginWindow->getPassword();
+    attemptLogin(userName, password);
+    loginWindow->clearState(); // for security reason clear sensitive info
 }

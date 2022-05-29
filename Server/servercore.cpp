@@ -44,14 +44,14 @@ void ServerCore::incomingConnection(const qintptr socketDescriptor)
 
     worker->moveToThread(threads.at(threadIdx));
     connect(threads.at(threadIdx), &QThread::finished, worker, &QObject::deleteLater);
-    connect(worker, &ServerWorker::disconnectedFromClient, this,
+    connect(worker, &ServerWorker::disconnectedFromClientSig, this,
             [this, worker, threadIdx] { userDisconnected(worker, threadIdx); });
 
-    connect(worker, &ServerWorker::error, this, [worker] { userError(worker); });
-    connect(worker, &ServerWorker::packetReceived, this, [this, worker](auto&& placeholder) {
+    connect(worker, &ServerWorker::errorSig, this, [worker] { userError(worker); });
+    connect(worker, &ServerWorker::packetReceivedSig, this, [this, worker](auto&& placeholder) {
         packetReceived(worker, std::forward<decltype(placeholder)>(placeholder));
     });
-    connect(this, &ServerCore::stopAllClients, worker, &ServerWorker::disconnectFromClient);
+    connect(this, &ServerCore::stopAllClientsSig, worker, &ServerWorker::disconnectFromClient);
     clients.append(worker);
     qInfo() << "new client connected";
 }
@@ -103,7 +103,7 @@ void ServerCore::userDisconnected(ServerWorker* const sender, const int threadId
         packet[Packet::Type::TYPE]     = Packet::Type::USER_LEFT;
         packet[Packet::Data::USERNAME] = userName;
         broadcast(packet, nullptr);
-        qInfo() << qPrintable(userName + QString(" disconnected"));
+        qInfo() << qPrintable(userName + QString(" disconnectedSig"));
     }
     sender->deleteLater();
 }
@@ -115,7 +115,7 @@ void ServerCore::userError(ServerWorker* const sender)
 
 void ServerCore::stopServer()
 {
-    emit stopAllClients();
+    emit stopAllClientsSig();
     close();
 }
 

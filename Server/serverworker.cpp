@@ -34,9 +34,9 @@ ServerWorker::ServerWorker(QObject* parent) : QObject(parent), serverSocket(new 
 #endif
 
     connect(serverSocket, &QSslSocket::readyRead, this, &ServerWorker::onReadyRead);
-    connect(serverSocket, &QSslSocket::disconnected, this, &ServerWorker::disconnectedFromClient);
+    connect(serverSocket, &QSslSocket::disconnected, this, &ServerWorker::disconnectedFromClientSig);
     connect(serverSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
-            &ServerWorker::error);
+            &ServerWorker::errorSig);
 }
 
 ServerWorker::~ServerWorker()
@@ -96,7 +96,7 @@ void ServerWorker::onReadyRead()
             const QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData, &parseError);
             if (parseError.error == QJsonParseError::NoError) {
                 if (jsonDoc.isObject()) {
-                    emit packetReceived(jsonDoc.object());
+                    emit packetReceivedSig(jsonDoc.object());
                 } else {
                     qInfo() << qPrintable(QString("invalid message: ") + QString::fromUtf8(jsonData));
                 }

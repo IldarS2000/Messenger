@@ -23,12 +23,12 @@ ClientCore::ClientCore(QObject* parent) : QObject(parent), clientSocket(new QSsl
     clientSocket->setLocalCertificate(sslCertificate);
 #endif
 
-    connect(clientSocket, &QSslSocket::connected, this, &ClientCore::connected);
-    connect(clientSocket, &QSslSocket::disconnected, this, &ClientCore::disconnected);
+    connect(clientSocket, &QSslSocket::connected, this, &ClientCore::connectedSig);
+    connect(clientSocket, &QSslSocket::disconnected, this, &ClientCore::disconnectedSig);
 
     connect(clientSocket, &QSslSocket::readyRead, this, &ClientCore::onReadyRead);
     connect(clientSocket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), this,
-            &ClientCore::error);
+            &ClientCore::errorSig);
 }
 
 ClientCore::~ClientCore()
@@ -90,11 +90,11 @@ void ClientCore::handleLoginPacket(const QJsonObject& packet)
     }
     const bool loginSuccess = successVal.toBool();
     if (loginSuccess) {
-        emit loggedIn();
+        emit loggedInSig();
         return;
     }
     const QJsonValue reasonVal = packet.value(QLatin1String(Packet::Data::REASON));
-    emit loginError(reasonVal.toString());
+    emit loginErrorSig(reasonVal.toString());
 }
 
 void ClientCore::handleMessagePacket(const QJsonObject& packet)
@@ -111,7 +111,7 @@ void ClientCore::handleMessagePacket(const QJsonObject& packet)
     if (timeVal.isNull() || !timeVal.isString()) {
         return;
     }
-    emit messageReceived({senderVal.toString(), textVal.toString(), timeVal.toString()});
+    emit messageReceivedSig({senderVal.toString(), textVal.toString(), timeVal.toString()});
 }
 
 void ClientCore::handleUserJoinedPacket(const QJsonObject& packet)
@@ -120,7 +120,7 @@ void ClientCore::handleUserJoinedPacket(const QJsonObject& packet)
     if (usernameVal.isNull() || !usernameVal.isString()) {
         return;
     }
-    emit userJoined(usernameVal.toString());
+    emit userJoinedSig(usernameVal.toString());
 }
 
 void ClientCore::handleUserLeftPacket(const QJsonObject& packet)
@@ -129,7 +129,7 @@ void ClientCore::handleUserLeftPacket(const QJsonObject& packet)
     if (usernameVal.isNull() || !usernameVal.isString()) {
         return;
     }
-    emit userLeft(usernameVal.toString());
+    emit userLeftSig(usernameVal.toString());
 }
 
 void ClientCore::handleInformJoinerPacket(const QJsonObject& packet)
@@ -158,7 +158,7 @@ void ClientCore::handleInformJoinerPacket(const QJsonObject& packet)
         QString time    = obj[Packet::Data::TIME].toString();
         messages.push_back({sender, text, time});
     }
-    emit informJoiner(usernames, messages);
+    emit informJoinerSig(usernames, messages);
 }
 
 void ClientCore::packetReceived(const QJsonObject& packet)

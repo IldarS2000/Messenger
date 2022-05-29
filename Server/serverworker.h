@@ -24,9 +24,9 @@ public slots:
 private slots:
     void onReadyRead();
 signals:
-    void packetReceived(const QJsonObject& packet);
-    void disconnectedFromClient();
-    void error();
+    void packetReceivedSig(const QJsonObject& packet);
+    void disconnectedFromClientSig();
+    void errorSig();
 
 private:
     QSslSocket* serverSocket;
