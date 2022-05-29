@@ -18,6 +18,13 @@ public:
     explicit Register(QWidget* parent = nullptr);
     ~Register() override;
 
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
+signals:
+    void signUpSig();
+    void closeSig();
+
 private:
     Ui::Register* ui;
 };

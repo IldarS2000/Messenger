@@ -381,5 +381,7 @@ void ClientWindow::signInClicked()
 
 void ClientWindow::signUpClicked()
 {
+    loginWindow->hide();
     registerWindow->show();
+    connect(registerWindow, &Register::closeSig, loginWindow, &QWidget::show);
 }

@@ -93,6 +93,8 @@ void Login::closeEvent(QCloseEvent* event)
 
 void Login::clearState()
 {
+    ui->nameLine->clear();
+    ui->passwordLine->clear();
     name.clear();
     password.clear();
 }
