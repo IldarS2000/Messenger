@@ -26,56 +26,6 @@ QString Login::getPassword() const
     return password;
 }
 
-/* blacklist check approach */
-bool Login::isValidName(const QString& name)
-{
-    if (name.isEmpty()) {
-        return false;
-    }
-    if (name.size() > maxUserNameSize) {
-        return false;
-    }
-    const bool isCorrectSymbols =
-            std::all_of(name.begin(), name.end(), [](const auto c) { return c.isLetter() || c == '_'; });
-    if (!isCorrectSymbols) {
-        return false;
-    }
-
-    return true;
-}
-
-/* blacklist check approach */
-bool Login::isValidDurablePassword(const QString& password)
-{
-    if (password.isEmpty()) {
-        return false;
-    }
-    if (!(password.size() >= minPasswordSize && password.size() <= maxPasswordSize)) {
-        return false;
-    }
-    bool containsUpper      = false;
-    bool containsLower      = false;
-    bool containsDigit      = false;
-    bool containsNotDesired = false;
-    for (const auto c : password) {
-        if (c.isUpper()) {
-            containsUpper = true;
-            continue;
-        }
-        if (c.isLower()) {
-            containsLower = true;
-            continue;
-        }
-        if (c.isDigit()) {
-            containsDigit = true;
-            continue;
-        }
-        containsNotDesired = true;
-    }
-
-    return containsUpper && containsLower && containsDigit && !containsNotDesired;
-}
-
 void Login::signInClicked()
 {
     emit signInSig();

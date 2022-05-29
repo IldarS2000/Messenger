@@ -31,7 +31,9 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(clientCore, &ClientCore::connectedSig, loadingScreen, &LoadingScreen::close);
     connect(clientCore, &ClientCore::connectedSig, this, &ClientWindow::connected);
     connect(clientCore, &ClientCore::loggedInSig, this, &ClientWindow::loggedIn);
+    connect(clientCore, &ClientCore::registeredSig, this, &ClientWindow::registered);
     connect(clientCore, &ClientCore::loginErrorSig, this, &ClientWindow::loginError);
+    connect(clientCore, &ClientCore::registerErrorSig, this, &ClientWindow::registerError);
     connect(clientCore, &ClientCore::messageReceivedSig, this, &ClientWindow::messageReceived);
     connect(clientCore, &ClientCore::disconnectedSig, this, &ClientWindow::disconnected);
     connect(clientCore, &ClientCore::errorSig, this, &ClientWindow::error);
@@ -43,7 +45,9 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(ui->messageEdit, &QLineEdit::returnPressed, this, &ClientWindow::sendMessage);
     // connect for login
     connect(loginWindow, &Login::signInSig, this, &ClientWindow::signInClicked);
-    connect(loginWindow, &Login::signUpSig, this, &ClientWindow::signUpClicked);
+    connect(loginWindow, &Login::signUpSig, this, &ClientWindow::loginSignUpClicked);
+    // connect for register
+    connect(registerWindow, &Register::signUpSig, this, &ClientWindow::registerSignUpClicked);
 
     // try connect
     QTimer::singleShot(100, this, [this]() { this->attemptConnection(); });
@@ -125,10 +129,21 @@ void ClientWindow::loggedIn()
     loginWindow->close();
 }
 
+void ClientWindow::registered()
+{
+    QMessageBox::information(this, tr("Register"), tr("you registered successfully"));
+    registerWindow->close();
+}
+
 void ClientWindow::loginError(const QString& reason)
 {
     QMessageBox::critical(this, tr("Error"), reason);
     connected();
+}
+
+void ClientWindow::registerError(const QString& reason)
+{
+    QMessageBox::critical(this, tr("Error"), reason);
 }
 
 QStringList ClientWindow::splitString(const QString& str, const int rowSize)
@@ -238,6 +253,9 @@ void ClientWindow::disconnected()
     logged = false;
     chatModel->removeRows(0, chatModel->rowCount());
     ui->users->clear();
+    disconnect(loginWindow, &Login::closeSig, this, &QWidget::close);
+    loginWindow->close();
+    registerWindow->close();
     if (isVisible()) {
         attemptConnection();
     }
@@ -366,6 +384,9 @@ void ClientWindow::error(const QAbstractSocket::SocketError socketError)
     logged = false;
     chatModel->removeRows(0, chatModel->rowCount());
     ui->users->clear();
+    disconnect(loginWindow, &Login::closeSig, this, &QWidget::close);
+    loginWindow->close();
+    registerWindow->close();
     if (isVisible()) {
         attemptConnection();
     }
@@ -379,9 +400,23 @@ void ClientWindow::signInClicked()
     loginWindow->clearState(); // for security reason clear sensitive info
 }
 
-void ClientWindow::signUpClicked()
+void ClientWindow::loginSignUpClicked()
 {
     loginWindow->hide();
     registerWindow->show();
     connect(registerWindow, &Register::closeSig, loginWindow, &QWidget::show);
 }
+
+void ClientWindow::attemptRegister(const QString& username, const QString& password)
+{
+    clientCore->registerUser(username, password);
+}
+
+void ClientWindow::registerSignUpClicked()
+{
+    const QString userName = registerWindow->getName();
+    const QString password = registerWindow->getPassword();
+    attemptRegister(userName, password);
+    registerWindow->clearState(); // for security reason clear sensitive info
+}
+

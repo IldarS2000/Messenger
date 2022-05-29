@@ -3,14 +3,18 @@
 
 #include "QDataStream"
 
-constexpr auto serializerVersion = QDataStream::Qt_5_7;
-constexpr quint16 PORT           = 30000;
-constexpr const char* const HOST = "127.0.0.1";
+constexpr auto SERIALIZER_VERSION = QDataStream::Qt_5_7;
+constexpr quint16 PORT            = 30000;
+constexpr const char* const HOST  = "127.0.0.1";
+constexpr int MAX_USER_NAME_SIZE  = 32;
+constexpr int MIN_PASSWORD_SIZE   = 8;
+constexpr int MAX_PASSWORD_SIZE   = 32;
 
 namespace Packet {
     namespace Type {
         constexpr const char* const TYPE          = "type";
         constexpr const char* const LOGIN         = "login";
+        constexpr const char* const REGISTER      = "register";
         constexpr const char* const USER_JOINED   = "user_joined";
         constexpr const char* const USER_LEFT     = "user_left";
         constexpr const char* const MESSAGE       = "message";

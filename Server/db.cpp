@@ -22,6 +22,18 @@ bool db::isUserExist(const QString& userName)
     return id != 0;
 }
 
+void db::addUser(const QString& userName, const QString& password)
+{
+    auto conn = ConnectionPool::getConnection();
+    QSqlQuery query(conn);
+    query.prepare(R"(insert into "Messenger".public.user (name, password)
+values (:name, :password))");
+    query.bindValue(":name", userName);
+    query.bindValue(":password", password);
+    query.exec();
+    ConnectionPool::releaseConnection(conn);
+}
+
 QString db::fetchUserPassword(const QString& userName)
 {
     auto conn = ConnectionPool::getConnection();

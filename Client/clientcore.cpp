@@ -49,7 +49,7 @@ void ClientCore::login(const QString& username, const QString& password)
     if (clientSocket->state() == QAbstractSocket::ConnectedState) {
         this->name = username;
         QDataStream clientStream(clientSocket);
-        clientStream.setVersion(serializerVersion);
+        clientStream.setVersion(SERIALIZER_VERSION);
 
         QJsonObject packet;
         packet[Packet::Type::TYPE]     = Packet::Type::LOGIN;
@@ -59,10 +59,25 @@ void ClientCore::login(const QString& username, const QString& password)
     }
 }
 
+void ClientCore::registerUser(const QString& username, const QString& password)
+{
+    if (clientSocket->state() == QAbstractSocket::ConnectedState) {
+        this->name = username;
+        QDataStream clientStream(clientSocket);
+        clientStream.setVersion(SERIALIZER_VERSION);
+
+        QJsonObject packet;
+        packet[Packet::Type::TYPE]     = Packet::Type::REGISTER;
+        packet[Packet::Data::USERNAME] = username;
+        packet[Packet::Data::PASSWORD] = password;
+        clientStream << QJsonDocument(packet).toJson(QJsonDocument::Compact);
+    }
+}
+
 void ClientCore::sendMessage(const QString& message, const QString& time)
 {
     QDataStream clientStream(clientSocket);
-    clientStream.setVersion(serializerVersion);
+    clientStream.setVersion(SERIALIZER_VERSION);
 
     QJsonObject packet;
     packet[Packet::Type::TYPE]   = Packet::Type::MESSAGE;
@@ -95,6 +110,21 @@ void ClientCore::handleLoginPacket(const QJsonObject& packet)
     }
     const QJsonValue reasonVal = packet.value(QLatin1String(Packet::Data::REASON));
     emit loginErrorSig(reasonVal.toString());
+}
+
+void ClientCore::handleRegisterPacket(const QJsonObject& packet)
+{
+    const QJsonValue successVal = packet.value(QLatin1String(Packet::Data::SUCCESS));
+    if (successVal.isNull() || !successVal.isBool()) {
+        return;
+    }
+    const bool registerSuccess = successVal.toBool();
+    if (registerSuccess) {
+        emit registeredSig();
+        return;
+    }
+    const QJsonValue reasonVal = packet.value(QLatin1String(Packet::Data::REASON));
+    emit registerErrorSig(reasonVal.toString());
 }
 
 void ClientCore::handleMessagePacket(const QJsonObject& packet)
@@ -170,6 +200,8 @@ void ClientCore::packetReceived(const QJsonObject& packet)
 
     if (isEqualPacketType(packetTypeVal, Packet::Type::LOGIN)) {
         handleLoginPacket(packet);
+    } else if (isEqualPacketType(packetTypeVal, Packet::Type::REGISTER)) {
+        handleRegisterPacket(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::MESSAGE)) {
         handleMessagePacket(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::USER_JOINED)) {
@@ -185,7 +217,7 @@ void ClientCore::onReadyRead()
 {
     QByteArray jsonData;
     QDataStream socketStream(clientSocket);
-    socketStream.setVersion(serializerVersion);
+    socketStream.setVersion(SERIALIZER_VERSION);
 
     while (true) {
         socketStream.startTransaction();

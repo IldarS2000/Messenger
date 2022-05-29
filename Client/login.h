@@ -18,8 +18,6 @@ public:
     ~Login() override;
     [[nodiscard]] QString getName() const;
     [[nodiscard]] QString getPassword() const;
-    [[nodiscard]] static bool isValidName(const QString& name);
-    [[nodiscard]] static bool isValidDurablePassword(const QString& password);
     void clearState();
 
 protected:
@@ -39,9 +37,6 @@ private:
     Ui::Login* ui;
     QString name;
     QString password;
-    static constexpr int maxUserNameSize = 32;
-    static constexpr int minPasswordSize = 8;
-    static constexpr int maxPasswordSize = 32;
 };
 
 #endif // LOGIN_H

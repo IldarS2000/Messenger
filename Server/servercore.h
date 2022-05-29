@@ -33,12 +33,15 @@ public slots:
     void stopServer();
 
 private:
+    void loginUser(ServerWorker* sender, const QJsonObject& packet);
+    static void registerUser(ServerWorker* sender, const QJsonObject& packet);
     void packetFromLoggedOut(ServerWorker* sender, const QJsonObject& packet);
     void packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet);
     QJsonArray getUsernames(ServerWorker* exclude) const;
-    static QJsonArray getMessages() ;
+    static QJsonArray getMessages();
     static void sendPacket(ServerWorker* destination, const QJsonObject& packet);
     static bool isEqualPacketType(const QJsonValue& jsonType, const char* strType);
+
 signals:
     void stopAllClientsSig();
 };

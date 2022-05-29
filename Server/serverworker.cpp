@@ -59,7 +59,7 @@ void ServerWorker::sendPacket(const QJsonObject& packet)
     qInfo() << qPrintable(QString("sending JSON to ") + getUserName() + QString("\n") + QString::fromUtf8(jsonData));
 
     QDataStream socketStream(serverSocket);
-    socketStream.setVersion(serializerVersion);
+    socketStream.setVersion(SERIALIZER_VERSION);
     socketStream << jsonData;
 }
 
@@ -87,7 +87,7 @@ void ServerWorker::onReadyRead()
 {
     QByteArray jsonData;
     QDataStream socketStream(serverSocket);
-    socketStream.setVersion(serializerVersion);
+    socketStream.setVersion(SERIALIZER_VERSION);
     while (true) {
         socketStream.startTransaction();
         socketStream >> jsonData;

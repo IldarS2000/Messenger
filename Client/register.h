@@ -17,9 +17,18 @@ class Register : public QWidget
 public:
     explicit Register(QWidget* parent = nullptr);
     ~Register() override;
+    [[nodiscard]] QString getName() const;
+    [[nodiscard]] QString getPassword() const;
+    [[nodiscard]] static bool isValidName(const QString& name);
+    [[nodiscard]] static bool isValidDurablePassword(const QString& password);
+    void clearState();
 
 protected:
     void closeEvent(QCloseEvent* event) override;
+
+private slots:
+    void signUpClicked();
+    void saveState();
 
 signals:
     void signUpSig();
@@ -27,6 +36,8 @@ signals:
 
 private:
     Ui::Register* ui;
+    QString name;
+    QString password;
 };
 
 

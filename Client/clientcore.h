@@ -15,18 +15,21 @@ class ClientCore : public QObject
 public:
     explicit ClientCore(QObject* parent = nullptr);
     ~ClientCore() override;
-public slots:
     void connectToServer(const QHostAddress& address, quint16 port);
     void login(const QString& username, const QString& password);
+    void registerUser(const QString& username, const QString& password);
     void sendMessage(const QString& message, const QString& time);
     void disconnectFromHost();
+
 private slots:
     void onReadyRead();
 signals:
     void connectedSig();
     void disconnectedSig();
     void loggedInSig();
+    void registeredSig();
     void loginErrorSig(const QString& reason);
+    void registerErrorSig(const QString& reason);
     void messageReceivedSig(const Message& message);
     void errorSig(QAbstractSocket::SocketError socketError);
     void userJoinedSig(const QString& username);
@@ -40,6 +43,7 @@ private:
 private:
     void packetReceived(const QJsonObject& packet);
     void handleLoginPacket(const QJsonObject& packet);
+    void handleRegisterPacket(const QJsonObject& packet);
     void handleMessagePacket(const QJsonObject& packet);
     void handleUserJoinedPacket(const QJsonObject& packet);
     void handleUserLeftPacket(const QJsonObject& packet);

@@ -46,9 +46,9 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item alignment="Qt::AlignRight">
-         <widget class="QLabel" name="loginLabel">
+         <widget class="QLabel" name="nameLabel">
           <property name="text">
-           <string>login</string>
+           <string>name</string>
           </property>
          </widget>
         </item>
@@ -73,7 +73,7 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QLineEdit" name="loginLine"/>
+           <widget class="QLineEdit" name="nameLine"/>
           </item>
           <item>
            <widget class="QLineEdit" name="password1Line"/>
@@ -103,13 +103,6 @@
        </spacer>
       </item>
       <item>
-       <widget class="QLabel" name="warningLabel">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="signUpButton">
         <property name="text">
          <string>sign up</string>
@@ -136,7 +129,7 @@
  </widget>
  <tabstops>
   <tabstop>password2Line</tabstop>
-  <tabstop>loginLine</tabstop>
+  <tabstop>nameLine</tabstop>
  </tabstops>
  <resources/>
  <connections/>
