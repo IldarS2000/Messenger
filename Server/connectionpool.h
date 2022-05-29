@@ -1,5 +1,5 @@
-#ifndef MESSENGER_CONNECTIONPOOL_H
-#define MESSENGER_CONNECTIONPOOL_H
+#ifndef CONNECTIONPOOL_H
+#define CONNECTIONPOOL_H
 
 #include <QtSql>
 #include <QQueue>
@@ -35,4 +35,4 @@ private:
     static inline ConnectionPool* instance = nullptr;
 };
 
-#endif // MESSENGER_CONNECTIONPOOL_H
+#endif // CONNECTIONPOOL_H

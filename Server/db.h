@@ -1,5 +1,5 @@
-#ifndef MESSENGER_DB_H
-#define MESSENGER_DB_H
+#ifndef DB_H
+#define DB_H
 
 #include "message.h"
 
@@ -9,4 +9,4 @@ namespace db {
     QList<Message> fetchMessages(const QString& groupName);
 }; // namespace db
 
-#endif // MESSENGER_DB_H
+#endif // DB_H

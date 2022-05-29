@@ -1,5 +1,5 @@
-#ifndef MESSENGER_LOADINGSCREEN_H
-#define MESSENGER_LOADINGSCREEN_H
+#ifndef LOADINGSCREEN_H
+#define LOADINGSCREEN_H
 
 #include <QWidget>
 #include <QMovie>
@@ -23,4 +23,4 @@ private:
     QMovie* movie;
 };
 
-#endif // MESSENGER_LOADINGSCREEN_H
+#endif // LOADINGSCREEN_H

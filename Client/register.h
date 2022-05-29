@@ -1,5 +1,5 @@
-#ifndef MESSENGER_REGISTER_H
-#define MESSENGER_REGISTER_H
+#ifndef REGISTER_H
+#define REGISTER_H
 
 #include <QWidget>
 
@@ -23,4 +23,4 @@ private:
 };
 
 
-#endif // MESSENGER_REGISTER_H
+#endif // REGISTER_H

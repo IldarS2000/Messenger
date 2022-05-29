@@ -53,18 +53,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="groups">
-       <property name="cursor">
-        <cursorShape>PointingHandCursor</cursorShape>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">* { 
-  font: bold;
-}</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QListWidget" name="users"/>
      </item>
      <item>

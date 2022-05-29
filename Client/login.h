@@ -1,5 +1,5 @@
-#ifndef MESSENGER_LOGIN_H
-#define MESSENGER_LOGIN_H
+#ifndef LOGIN_H
+#define LOGIN_H
 
 #include <QWidget>
 
@@ -21,4 +21,4 @@ private:
     Ui::Login* ui;
 };
 
-#endif // MESSENGER_LOGIN_H
+#endif // LOGIN_H
