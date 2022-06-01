@@ -118,7 +118,7 @@ void ClientWindow::loggedIn()
     ui->sendButton->setEnabled(true);
     ui->messageEdit->setEnabled(true);
     ui->chatView->setEnabled(true);
-    QTimer::singleShot(0, ui->messageEdit, SLOT(setFocus()));
+    ui->messageEdit->setFocus();
 
     // update for logged state
     lastUserName.clear();

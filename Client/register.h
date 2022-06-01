@@ -27,6 +27,7 @@ protected:
     void closeEvent(QCloseEvent* event) override;
 
 private:
+    void clearEditLines();
     void saveState();
 
 private slots:

@@ -8,6 +8,7 @@ Register::Register(QWidget* parent) : QWidget(parent), ui(new Ui::Register)
 {
     ui->setupUi(this);
     setWindowModality(Qt::ApplicationModal);
+    ui->nameLine->setFocus();
     ui->password1Line->setEchoMode(QLineEdit::Password);
     ui->password2Line->setEchoMode(QLineEdit::Password);
 
@@ -84,11 +85,16 @@ bool Register::isValidDurablePassword(const QString& password)
     return containsUpper && containsLower && containsDigit && !containsNotDesired;
 }
 
-void Register::clearState()
+void Register::clearEditLines()
 {
     ui->nameLine->clear();
     ui->password1Line->clear();
     ui->password2Line->clear();
+}
+
+void Register::clearState()
+{
+    clearEditLines();
     name.clear();
     password.clear();
 }
@@ -103,16 +109,19 @@ void Register::signUpClicked()
 {
     saveState();
     if (!isValidName(name)) {
+        clearEditLines();
         QMessageBox::warning(this, tr("Error"), tr("name can contain only letters and cannot be more than 32 symbols"));
         return;
     }
     if (!isValidDurablePassword(password)) {
+        clearEditLines();
         QMessageBox::warning(this, tr("Error"),
                              tr("password is too weak, password should contain A-Z, a-z, 0-9 and should be not "
                                 "less than 8 symbols and cannot be more than 32 symbols"));
         return;
     }
     if (password != ui->password2Line->text()) {
+        clearEditLines();
         QMessageBox::warning(this, tr("Error"), tr("passwords not equal"));
         return;
     }
