@@ -4,6 +4,11 @@
 
 void messageHandler(const QtMsgType type, const QMessageLogContext& context, const QString& message)
 {
+#ifdef NDEBUG
+    if (type == QtDebugMsg) {
+        return;
+    }
+#endif
     if (type == QtWarningMsg && message.startsWith("setGeometry")) {
         return;
     }
