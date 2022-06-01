@@ -200,8 +200,11 @@ void ServerCore::registerUser(ServerWorker* const sender, const QJsonObject& pac
     if (password.isEmpty()) {
         return;
     }
-
     db::addUser(userName, password);
+    // for security reason clear sensitive info
+    passwordVal = QJsonValue();
+    password.clear();
+    //
 
     // register success
     QJsonObject successPacket;
@@ -254,20 +257,7 @@ void ServerCore::loginUser(ServerWorker* const sender, const QJsonObject& packet
     // for security reason clear sensitive info
     passwordVal = QJsonValue();
     password.clear();
-
-    //    for (ServerWorker* worker : qAsConst(clients)) {
-    //        if (worker == sender) {
-    //            continue;
-    //        }
-    //        if (worker->getUserName().compare(newUserName, Qt::CaseInsensitive) == 0) {
-    //            QJsonObject errorPacket;
-    //            errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
-    //            errorPacket[Packet::Data::SUCCESS] = false;
-    //            errorPacket[Packet::Data::REASON]  = "duplicate username";
-    //            sendPacket(sender, errorPacket);
-    //            return;
-    //        }
-    //    }
+    //
 
     // login success
     sender->setUserName(userName);
