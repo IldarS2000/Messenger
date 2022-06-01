@@ -53,10 +53,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QListWidget" name="users"/>
-     </item>
-     <item>
-      <widget class="QPushButton" name="settings">
+      <widget class="QPushButton" name="groupSettings">
        <property name="cursor">
         <cursorShape>PointingHandCursor</cursorShape>
        </property>
@@ -66,9 +63,12 @@
 }</string>
        </property>
        <property name="text">
-        <string>settings</string>
+        <string>group settings</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <widget class="QListWidget" name="users"/>
      </item>
     </layout>
    </item>
@@ -160,6 +160,15 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>createGroup</tabstop>
+  <tabstop>connectGroup</tabstop>
+  <tabstop>groupSettings</tabstop>
+  <tabstop>users</tabstop>
+  <tabstop>chatView</tabstop>
+  <tabstop>messageEdit</tabstop>
+  <tabstop>sendButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
