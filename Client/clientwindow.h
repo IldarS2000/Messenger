@@ -53,6 +53,7 @@ private slots:
     void registerSignUpClicked();
 
 private:
+    static QString encryptPassword(const QString& password);
     void attemptConnection();
     void attemptLogin(const QString& username, const QString& password);
     void attemptRegister(const QString& username, const QString& password);

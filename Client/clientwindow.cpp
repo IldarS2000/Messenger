@@ -392,11 +392,16 @@ void ClientWindow::error(const QAbstractSocket::SocketError socketError)
     }
 }
 
+QString ClientWindow::encryptPassword(const QString& password)
+{
+    return QCryptographicHash::hash(password.toUtf8(), QCryptographicHash::Md5);
+}
+
 void ClientWindow::signInClicked()
 {
-    const QString userName = loginWindow->getName();
-    const QString password = loginWindow->getPassword();
-    attemptLogin(userName, password);
+    const QString userName          = loginWindow->getName();
+    const QString encryptedPassword = encryptPassword(loginWindow->getPassword());
+    attemptLogin(userName, encryptedPassword);
     loginWindow->clearState(); // for security reason clear sensitive info
 }
 
@@ -409,7 +414,7 @@ void ClientWindow::loginSignUpClicked()
 
 void ClientWindow::attemptRegister(const QString& username, const QString& password)
 {
-    clientCore->registerUser(username, password);
+    clientCore->registerUser(username, encryptPassword(password));
 }
 
 void ClientWindow::registerSignUpClicked()
@@ -419,4 +424,3 @@ void ClientWindow::registerSignUpClicked()
     attemptRegister(userName, password);
     registerWindow->clearState(); // for security reason clear sensitive info
 }
-
