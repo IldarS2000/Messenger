@@ -1,12 +1,24 @@
 #include <QUuid>
+#include <QTimer>
 #include "connectionpool.h"
 #include "config.h"
 
+ConnectionPool::ConnectionPool()
+{
+    timer = new QTimer();
+    timer->setInterval(releaseConnectionInterval);
+    timer->setSingleShot(false);
+    connect(timer, &QTimer::timeout, this, [this]() { releaseUnusedConnections(); });
+    timer->start();
+}
+
 ConnectionPool::~ConnectionPool()
 {
-    foreach (QString connectionName, usedConnectionNames) {
+    timer->stop();
+    for (const auto& connectionName : usedConnections) {
         QSqlDatabase::removeDatabase(connectionName);
     }
+    delete timer;
 }
 
 ConnectionPool& ConnectionPool::getInstance()
@@ -32,17 +44,17 @@ QSqlDatabase ConnectionPool::getConnection()
     ConnectionPool& pool = ConnectionPool::getInstance();
 
     QMutexLocker locker(&mutex);
-    int connectionCount = pool.unusedConnectionNames.size() + pool.usedConnectionNames.size();
-    for (int i = 0; i < ConnectionPool::maxWaitTime && pool.unusedConnectionNames.empty() &&
+    int connectionCount = pool.unusedConnections.size() + pool.usedConnections.size();
+    for (int i = 0; i < ConnectionPool::maxWaitTime && pool.unusedConnections.empty() &&
                     connectionCount == ConnectionPool::maxConnectionCount;
          i += ConnectionPool::waitInterval) {
         waitConnection.wait(&mutex, ConnectionPool::waitInterval);
-        connectionCount = pool.unusedConnectionNames.size() + pool.usedConnectionNames.size();
+        connectionCount = pool.unusedConnections.size() + pool.usedConnections.size();
     }
 
     QString connectionName;
-    if (!pool.unusedConnectionNames.empty()) {
-        connectionName = pool.unusedConnectionNames.dequeue();
+    if (!pool.unusedConnections.empty()) {
+        connectionName = pool.unusedConnections.dequeue().connectionName;
     } else if (connectionCount < ConnectionPool::maxConnectionCount) {
         connectionName = QString(QUuid::createUuid().toString());
     } else {
@@ -52,7 +64,7 @@ QSqlDatabase ConnectionPool::getConnection()
 
     QSqlDatabase db = ConnectionPool::createConnection(connectionName);
     if (db.isOpen()) {
-        pool.usedConnectionNames.enqueue(connectionName);
+        pool.usedConnections.enqueue(connectionName);
     }
     return db;
 }
@@ -61,10 +73,10 @@ void ConnectionPool::releaseConnection(const QSqlDatabase& connection)
 {
     ConnectionPool& pool   = ConnectionPool::getInstance();
     QString connectionName = connection.connectionName();
-    if (pool.usedConnectionNames.contains(connectionName)) {
+    if (pool.usedConnections.contains(connectionName)) {
         QMutexLocker locker(&mutex);
-        pool.usedConnectionNames.removeOne(connectionName);
-        pool.unusedConnectionNames.enqueue(connectionName);
+        pool.usedConnections.removeOne(connectionName);
+        pool.unusedConnections.enqueue({connectionName, false});
         waitConnection.wakeOne();
     }
 }
@@ -98,4 +110,16 @@ QSqlDatabase ConnectionPool::createConnection(const QString& connectionName)
     qInfo() << qPrintable(QString("DB connection ") + connectionName + QString(" ok"));
 
     return db;
+}
+
+void ConnectionPool::releaseUnusedConnections()
+{
+    QMutexLocker locker(&mutex);
+    for (auto& unusedConnection : unusedConnections) {
+        if (!unusedConnection.released) {
+            QSqlDatabase::removeDatabase(unusedConnection.connectionName);
+            qInfo() << "released connection: " << unusedConnection.connectionName;
+            unusedConnection.released = true;
+        }
+    }
 }
