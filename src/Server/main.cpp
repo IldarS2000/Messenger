@@ -9,12 +9,8 @@ int main(int argc, char* argv[])
     qInstallMessageHandler(messageHandler);
 
     qInfo() << "--- start server ---";
-    try {
-        ServerController server;
-        server.startServer();
-    } catch (const std::exception& e) {
-        qCritical() << "critical error occurred: " << e.what();
-    }
+    ServerController server;
+    server.startServer();
 
     return QApplication::exec();
 }

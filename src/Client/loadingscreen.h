@@ -18,6 +18,12 @@ public:
     explicit LoadingScreen(QWidget* parent = nullptr);
     ~LoadingScreen() override;
 
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
+signals:
+    void closeSig();
+
 private:
     Ui::LoadingScreen* ui;
     QMovie* movie;

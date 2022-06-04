@@ -22,6 +22,7 @@ ClientWindow::ClientWindow(QWidget* parent)
     ui->setupUi(this);
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     setMinimumSize(minWindowWidth, minWindowHeight);
+    this->setWindowState(Qt::WindowState::WindowActive);
 
     chatModel->insertColumn(0);
     ui->chatView->setModel(chatModel);
@@ -50,6 +51,8 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(registerWindow, &Register::signUpSig, this, &ClientWindow::registerSignUpClicked);
     // connect for create group
     connect(ui->createGroup, &QPushButton::clicked, this, &ClientWindow::createGroupClicked);
+    // connect for connect to group
+    connect(ui->connectGroup, &QPushButton::clicked, this, &ClientWindow::connectGroupClicked);
 
     // try connect
     QTimer::singleShot(100, this, [this]() { this->attemptConnection(); });
@@ -74,10 +77,10 @@ QPair<QString, QString> ClientWindow::getConnectionCredentials()
     dialog.resize(300, 100);
     QFormLayout form(&dialog);
 
-    QLabel usernameLabel("username");
+    QLabel usernameLabel("group name");
     form.addRow(&usernameLabel);
-    QLineEdit usernameLineEdit(&dialog);
-    form.addRow(&usernameLineEdit);
+    QLineEdit groupNameLineEdit(&dialog);
+    form.addRow(&groupNameLineEdit);
 
     QLabel passwordLabel("password");
     form.addRow(&passwordLabel);
@@ -93,7 +96,7 @@ QPair<QString, QString> ClientWindow::getConnectionCredentials()
     connect(clientCore, &ClientCore::disconnectedSig, &dialog, &QDialog::close);
 
     if (dialog.exec() == QDialog::Accepted) {
-        return {usernameLineEdit.text(), passwordLineEdit.text()};
+        return {groupNameLineEdit.text(), passwordLineEdit.text()};
     }
     return {};
 }
@@ -212,7 +215,7 @@ void ClientWindow::displayMessage(const QString& message, const QString& time, c
 void ClientWindow::messageReceived(const Message& message)
 {
     int currentRow = chatModel->rowCount();
-    if (lastUserName != message.getSender()) {
+    if (lastUserName != message.getSender() && clientUserName != message.getSender()) {
         lastUserName = message.getSender();
 
         QFont boldFont;
@@ -225,7 +228,11 @@ void ClientWindow::messageReceived(const Message& message)
         chatModel->setData(chatModel->index(currentRow, 0), boldFont, Qt::FontRole);
         ++currentRow;
     }
-    displayMessage(message.getMessage(), message.getTime(), currentRow, Qt::AlignLeft);
+    if (clientUserName == message.getSender()) {
+        displayMessage(message.getMessage(), message.getTime(), currentRow, Qt::AlignRight);
+    } else {
+        displayMessage(message.getMessage(), message.getTime(), currentRow, Qt::AlignLeft);
+    }
 }
 
 void ClientWindow::sendMessage()
@@ -403,6 +410,7 @@ QString ClientWindow::encryptPassword(const QString& password)
 void ClientWindow::signInClicked()
 {
     const QString userName          = loginWindow->getName();
+    clientUserName                  = userName;
     const QString encryptedPassword = encryptPassword(loginWindow->getPassword());
     attemptLogin(userName, encryptedPassword);
     loginWindow->clearState(); // for security reason clear sensitive info
@@ -431,4 +439,9 @@ void ClientWindow::registerSignUpClicked()
 void ClientWindow::createGroupClicked()
 {
     createGroupWindow->show();
+}
+
+void ClientWindow::connectGroupClicked()
+{
+    const auto& [name, password] = getConnectionCredentials();
 }

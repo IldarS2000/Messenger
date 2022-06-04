@@ -21,3 +21,8 @@ LoadingScreen::~LoadingScreen()
     delete ui;
     delete movie;
 }
+
+void LoadingScreen::closeEvent(QCloseEvent* event)
+{
+    emit closeSig();
+}

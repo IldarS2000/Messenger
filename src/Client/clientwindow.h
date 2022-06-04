@@ -27,6 +27,7 @@ private:
     Ui::ClientWindow* ui;
     ClientCore* clientCore;
     QStandardItemModel* chatModel;
+    QString clientUserName;
     QString lastUserName;
     Login* loginWindow;
     Register* registerWindow;
@@ -54,6 +55,7 @@ private slots:
     void loginSignUpClicked();
     void registerSignUpClicked();
     void createGroupClicked();
+    void connectGroupClicked();
 
 private:
     static QString encryptPassword(const QString& password);

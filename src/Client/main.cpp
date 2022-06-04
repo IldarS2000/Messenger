@@ -9,12 +9,8 @@ int main(int argc, char* argv[])
     qInstallMessageHandler(messageHandler);
 
     qInfo() << "--- start client ---";
-    try {
-        ClientWindow client;
-        client.show();
-    } catch (const std::exception& e) {
-        qCritical() << "critical error occurred: " << e.what();
-    }
+    ClientWindow client;
+    client.show();
 
     return QApplication::exec();
 }
