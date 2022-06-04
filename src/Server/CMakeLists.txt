@@ -7,9 +7,9 @@ find_package(Qt5 5.7 COMPONENTS
 		Gui
 		Widgets
 		Network
-		Sql
+        sql
 		REQUIRED)
-aux_source_directory(../Server SOURCES)
+aux_source_directory(. SOURCES)
 aux_source_directory(../common SOURCES)
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE

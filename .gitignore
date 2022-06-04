@@ -1,4 +1,4 @@
 /cmake-build-debug-mingw/
 /cmake-build-release-mingw/
 /.idea
-/Server/config.h
+/src/Server/config.h

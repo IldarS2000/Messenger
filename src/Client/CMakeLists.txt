@@ -8,9 +8,9 @@ find_package(Qt5 5.7 COMPONENTS
         Widgets
         Network
         REQUIRED)
-aux_source_directory(../Client SOURCES)
+aux_source_directory(. SOURCES)
 aux_source_directory(../common SOURCES)
-set(RESOURCES resources/logo.rc resources/resources.qrc)
+set(resources resources/logo.rc resources/resources.qrc)
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${RESOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE
