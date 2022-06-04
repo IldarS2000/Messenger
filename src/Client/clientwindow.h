@@ -8,6 +8,7 @@
 #include "register.h"
 #include "clientcore.h"
 #include "loadingscreen.h"
+#include "creategroup.h"
 #include "message.h"
 
 namespace Ui {
@@ -29,6 +30,7 @@ private:
     QString lastUserName;
     Login* loginWindow;
     Register* registerWindow;
+    CreateGroup* createGroupWindow;
     LoadingScreen* loadingScreen;
     bool logged;
     static constexpr int minWindowWidth    = 750;
@@ -51,6 +53,7 @@ private slots:
     void signInClicked();
     void loginSignUpClicked();
     void registerSignUpClicked();
+    void createGroupClicked();
 
 private:
     static QString encryptPassword(const QString& password);

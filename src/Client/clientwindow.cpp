@@ -16,7 +16,7 @@
 ClientWindow::ClientWindow(QWidget* parent)
     : QWidget(parent), ui(new Ui::ClientWindow), clientCore(new ClientCore(this)),
       chatModel(new QStandardItemModel(this)), loadingScreen(new LoadingScreen), logged(false), loginWindow(new Login),
-      registerWindow(new Register)
+      registerWindow(new Register), createGroupWindow(new CreateGroup)
 {
     // ui setup
     ui->setupUi(this);
@@ -48,6 +48,8 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(loginWindow, &Login::signUpSig, this, &ClientWindow::loginSignUpClicked);
     // connect for register
     connect(registerWindow, &Register::signUpSig, this, &ClientWindow::registerSignUpClicked);
+    // connect for create group
+    connect(ui->createGroup, &QPushButton::clicked, this, &ClientWindow::createGroupClicked);
 
     // try connect
     QTimer::singleShot(100, this, [this]() { this->attemptConnection(); });
@@ -61,6 +63,7 @@ ClientWindow::~ClientWindow()
     delete loadingScreen;
     delete loginWindow;
     delete registerWindow;
+    delete createGroupWindow;
 }
 
 QPair<QString, QString> ClientWindow::getConnectionCredentials()
@@ -423,4 +426,9 @@ void ClientWindow::registerSignUpClicked()
     const QString password = registerWindow->getPassword();
     attemptRegister(userName, password);
     registerWindow->clearState(); // for security reason clear sensitive info
+}
+
+void ClientWindow::createGroupClicked()
+{
+    createGroupWindow->show();
 }
