@@ -17,6 +17,7 @@ namespace Packet {
         constexpr const char* const LOGIN         = "login";
         constexpr const char* const REGISTER      = "register";
         constexpr const char* const CONNECT_GROUP = "connect_group";
+        constexpr const char* const CREATE_GROUP  = "create_group";
         constexpr const char* const USER_JOINED   = "user_joined";
         constexpr const char* const USER_LEFT     = "user_left";
         constexpr const char* const MESSAGE       = "message";

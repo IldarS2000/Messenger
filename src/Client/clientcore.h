@@ -20,6 +20,7 @@ public:
     void login(const QString& username, const QString& password);
     void registerUser(const QString& username, const QString& password);
     void connectGroup(const QString& groupName, const QString& password);
+    void createGroup(const QString& groupName, const QString& password);
     void sendMessage(const QString& message, const QString& time);
     void disconnectFromHost();
 
@@ -31,9 +32,11 @@ signals:
     void loggedInSig();
     void registeredSig();
     void connectedToGroupSig();
+    void createdGroupSig();
     void loginErrorSig(const QString& reason);
     void registerErrorSig(const QString& reason);
     void connectToGroupErrorSig(const QString& reason);
+    void createdGroupErrorSig(const QString& reason);
     void messageReceivedSig(const Message& message);
     void errorSig(QAbstractSocket::SocketError socketError);
     void userJoinedSig(const QString& username);
@@ -50,6 +53,7 @@ private:
     void handleLoginPacket(const QJsonObject& packet);
     void handleRegisterPacket(const QJsonObject& packet);
     void handleConnectedToGroup(const QJsonObject& packet);
+    void handleCreatedGroup(const QJsonObject& packet);
     void handleMessagePacket(const QJsonObject& packet);
     void handleUserJoinedPacket(const QJsonObject& packet);
     void handleUserLeftPacket(const QJsonObject& packet);

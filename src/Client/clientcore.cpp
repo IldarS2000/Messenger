@@ -94,6 +94,21 @@ void ClientCore::connectGroup(const QString& groupName, const QString& password)
     }
 }
 
+void ClientCore::createGroup(const QString& groupName, const QString& password)
+{
+    if (clientSocket->state() == QAbstractSocket::ConnectedState) {
+        QDataStream clientStream(clientSocket);
+        clientStream.setVersion(SERIALIZER_VERSION);
+
+        QJsonObject packet;
+        packet[Packet::Type::TYPE]       = Packet::Type::CREATE_GROUP;
+        packet[Packet::Data::GROUP_NAME] = groupName;
+        packet[Packet::Data::USERNAME]   = this->name;
+        packet[Packet::Data::PASSWORD]   = password;
+        clientStream << QJsonDocument(packet).toJson(QJsonDocument::Compact);
+    }
+}
+
 void ClientCore::sendMessage(const QString& message, const QString& time)
 {
     QDataStream clientStream(clientSocket);
@@ -161,6 +176,21 @@ void ClientCore::handleConnectedToGroup(const QJsonObject& packet)
     }
     const QJsonValue reasonVal = packet.value(QLatin1String(Packet::Data::REASON));
     emit connectToGroupErrorSig(reasonVal.toString());
+}
+
+void ClientCore::handleCreatedGroup(const QJsonObject& packet)
+{
+    const QJsonValue successVal = packet.value(QLatin1String(Packet::Data::SUCCESS));
+    if (successVal.isNull() || !successVal.isBool()) {
+        return;
+    }
+    const bool createdGroupSuccess = successVal.toBool();
+    if (createdGroupSuccess) {
+        emit createdGroupSig();
+        return;
+    }
+    const QJsonValue reasonVal = packet.value(QLatin1String(Packet::Data::REASON));
+    emit createdGroupErrorSig(reasonVal.toString());
 }
 
 void ClientCore::handleMessagePacket(const QJsonObject& packet)
@@ -241,6 +271,8 @@ void ClientCore::packetReceived(const QJsonObject& packet)
         handleRegisterPacket(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::CONNECT_GROUP)) {
         handleConnectedToGroup(packet);
+    } else if (isEqualPacketType(packetTypeVal, Packet::Type::CREATE_GROUP)) {
+        handleCreatedGroup(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::MESSAGE)) {
         handleMessagePacket(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::USER_JOINED)) {

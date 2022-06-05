@@ -33,9 +33,11 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(clientCore, &ClientCore::loggedInSig, this, &ClientWindow::loggedIn);
     connect(clientCore, &ClientCore::registeredSig, this, &ClientWindow::registered);
     connect(clientCore, &ClientCore::connectedToGroupSig, this, &ClientWindow::connectedToGroup);
+    connect(clientCore, &ClientCore::createdGroupSig, this, &ClientWindow::createdGroup);
     connect(clientCore, &ClientCore::loginErrorSig, this, &ClientWindow::loginError);
     connect(clientCore, &ClientCore::registerErrorSig, this, &ClientWindow::registerError);
     connect(clientCore, &ClientCore::connectToGroupErrorSig, this, &ClientWindow::connectGroupError);
+    connect(clientCore, &ClientCore::createdGroupErrorSig, this, &ClientWindow::createdGroupError);
     connect(clientCore, &ClientCore::messageReceivedSig, this, &ClientWindow::messageReceived);
     connect(clientCore, &ClientCore::disconnectedSig, this, &ClientWindow::disconnected);
     connect(clientCore, &ClientCore::errorSig, this, &ClientWindow::error);
@@ -52,6 +54,7 @@ ClientWindow::ClientWindow(QWidget* parent)
     connect(registerWindow, &Register::signUpSig, this, &ClientWindow::registerSignUpClicked);
     // connect for create group
     connect(ui->createGroup, &QPushButton::clicked, this, &ClientWindow::createGroupClicked);
+    connect(createGroupWindow, &CreateGroup::createGroupSig, this, &ClientWindow::createGroupWindowClicked);
     // connect for connect to group
     connect(ui->connectGroup, &QPushButton::clicked, this, &ClientWindow::connectGroupClicked);
 
@@ -442,6 +445,14 @@ void ClientWindow::createGroupClicked()
     createGroupWindow->show();
 }
 
+void ClientWindow::createGroupWindowClicked()
+{
+    const QString groupName = createGroupWindow->getName();
+    const QString password  = createGroupWindow->getPassword();
+    attemptCreateGroup(groupName, password);
+    createGroupWindow->clearState(); // for security reason clear sensitive info
+}
+
 void ClientWindow::attemptConnectGroup(const QString& groupName, const QString& password)
 {
     clientCore->connectGroup(groupName, password);
@@ -475,4 +486,20 @@ void ClientWindow::disableUi()
     ui->createGroup->setEnabled(false);
     ui->connectGroup->setEnabled(false);
     ui->groupSettings->setEnabled(false);
+}
+
+void ClientWindow::attemptCreateGroup(const QString& groupName, const QString& password)
+{
+    clientCore->createGroup(groupName, password);
+}
+
+void ClientWindow::createdGroup()
+{
+    QMessageBox::information(this, tr("Create Group"), tr("group created successfully"));
+    createGroupWindow->close();
+}
+
+void ClientWindow::createdGroupError(const QString& reason)
+{
+    QMessageBox::critical(this, tr("Error"), reason);
 }

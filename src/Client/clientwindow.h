@@ -42,9 +42,11 @@ private slots:
     void loggedIn();
     void registered();
     void connectedToGroup();
+    void createdGroup();
     void loginError(const QString& reason);
     void registerError(const QString& reason);
     void connectGroupError(const QString& reason);
+    void createdGroupError(const QString& reason);
     void messageReceived(const Message& message);
     void sendMessage();
     void disconnected();
@@ -56,6 +58,7 @@ private slots:
     void loginSignUpClicked();
     void registerSignUpClicked();
     void createGroupClicked();
+    void createGroupWindowClicked();
     void connectGroupClicked();
 
 private:
@@ -64,6 +67,7 @@ private:
     void attemptLogin(const QString& username, const QString& password);
     void attemptRegister(const QString& username, const QString& password);
     void attemptConnectGroup(const QString& groupName, const QString& password);
+    void attemptCreateGroup(const QString& groupName, const QString& password);
     void enableUi();
     void disableUi();
 

@@ -293,16 +293,8 @@ void ServerCore::loginUser(ServerWorker* const sender, const QJsonObject& packet
     sendPacket(sender, successPacket);
 }
 
-void ServerCore::packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet)
+void ServerCore::connectGroup(ServerWorker* sender, const QJsonObject& packet)
 {
-    const QJsonValue typeVal = packet.value(QLatin1String(Packet::Type::TYPE));
-    if (typeVal.isNull() || !typeVal.isString()) {
-        return;
-    }
-    if (!isEqualPacketType(typeVal, Packet::Type::CONNECT_GROUP)) {
-        return;
-    }
-
     // parse username
     const QJsonValue usernameVal = packet.value(QLatin1String(Packet::Data::USERNAME));
     if (usernameVal.isNull() || !usernameVal.isString()) {
@@ -315,7 +307,7 @@ void ServerCore::packetFromLoggedIn(ServerWorker* sender, const QJsonObject& pac
 
     // parse group name
     const QJsonValue groupNameVal = packet.value(QLatin1String(Packet::Data::GROUP_NAME));
-    if (usernameVal.isNull() || !usernameVal.isString()) {
+    if (groupNameVal.isNull() || !groupNameVal.isString()) {
         return;
     }
     const QString groupName = groupNameVal.toString().simplified();
@@ -377,6 +369,67 @@ void ServerCore::packetFromLoggedIn(ServerWorker* sender, const QJsonObject& pac
     this->broadcast(sender->getGroupName(), connectedBroadcastPacket, sender);
 }
 
+void ServerCore::createGroup(ServerWorker* sender, const QJsonObject& packet)
+{
+    // parse group name
+    const QJsonValue groupNameVal = packet.value(QLatin1String(Packet::Data::GROUP_NAME));
+    if (groupNameVal.isNull() || !groupNameVal.isString()) {
+        return;
+    }
+    const QString groupName = groupNameVal.toString().simplified();
+    if (groupName.isEmpty()) {
+        return;
+    }
+
+    if (db::isGroupExist(groupName)) {
+        QJsonObject errorPacket;
+        errorPacket[Packet::Type::TYPE]    = Packet::Type::CONNECT_GROUP;
+        errorPacket[Packet::Data::SUCCESS] = false;
+        errorPacket[Packet::Data::REASON]  = "group with such name already exist";
+        sendPacket(sender, errorPacket);
+        return;
+    }
+
+    // parse password
+    QJsonValue passwordVal = packet.value(QLatin1String(Packet::Data::PASSWORD));
+    if (passwordVal.isNull() || !passwordVal.isString()) {
+        return;
+    }
+    QString password = passwordVal.toString().simplified();
+    if (password.isEmpty()) {
+        return;
+    }
+
+    db::addGroup(groupName, password);
+
+    // for security reason clear sensitive info
+    passwordVal = QJsonValue();
+    password.clear();
+    //
+
+    // create group success
+    QJsonObject successPacket;
+    successPacket[Packet::Type::TYPE]    = Packet::Type::CREATE_GROUP;
+    successPacket[Packet::Data::SUCCESS] = true;
+    sendPacket(sender, successPacket);
+}
+
+void ServerCore::packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet)
+{
+    Q_ASSERT(sender);
+    // check packet type
+    const QJsonValue typeVal = packet.value(QLatin1String(Packet::Type::TYPE));
+    if (typeVal.isNull() || !typeVal.isString()) {
+        return;
+    }
+
+    if (isEqualPacketType(typeVal, Packet::Type::CONNECT_GROUP)) {
+        connectGroup(sender, packet);
+    } else if (isEqualPacketType(typeVal, Packet::Type::CREATE_GROUP)) {
+        createGroup(sender, packet);
+    }
+}
+
 void ServerCore::packetFromConnectedToGroup(ServerWorker* const sender, const QJsonObject& packet)
 {
     Q_ASSERT(sender);
@@ -385,7 +438,8 @@ void ServerCore::packetFromConnectedToGroup(ServerWorker* const sender, const QJ
         return;
     }
 
-    if (isEqualPacketType(typeVal, Packet::Type::CONNECT_GROUP)) {
+    if (isEqualPacketType(typeVal, Packet::Type::CONNECT_GROUP) ||
+        isEqualPacketType(typeVal, Packet::Type::CREATE_GROUP)) {
         packetFromLoggedIn(sender, packet);
     } else if (!isEqualPacketType(typeVal, Packet::Type::MESSAGE)) {
         return;

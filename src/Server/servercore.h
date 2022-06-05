@@ -36,9 +36,11 @@ private:
     void loginUser(ServerWorker* sender, const QJsonObject& packet);
     bool isUserLoggedIn(const QString& username);
     void registerUser(ServerWorker* sender, const QJsonObject& packet);
+    void connectGroup(ServerWorker* sender, const QJsonObject& packet);
+    void createGroup(ServerWorker* sender, const QJsonObject& packet);
     void packetFromLoggedOut(ServerWorker* sender, const QJsonObject& packet);
     void packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet);
-    void packetFromConnectedToGroup(ServerWorker* constsender, const QJsonObject& packet);
+    void packetFromConnectedToGroup(ServerWorker* sender, const QJsonObject& packet);
     QJsonArray getUsernames(ServerWorker* exclude) const;
     static QJsonArray getMessages(const QString& groupName);
     static void sendPacket(ServerWorker* destination, const QJsonObject& packet);

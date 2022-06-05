@@ -34,6 +34,18 @@ values (:name, :password))");
     ConnectionPool::releaseConnection(conn);
 }
 
+void db::addGroup(const QString& groupName, const QString& password)
+{
+    auto conn = ConnectionPool::getConnection();
+    QSqlQuery query(conn);
+    query.prepare(R"(insert into "Messenger".public.group (name, password)
+values (:name, :password))");
+    query.bindValue(":name", groupName);
+    query.bindValue(":password", password);
+    query.exec();
+    ConnectionPool::releaseConnection(conn);
+}
+
 QString db::fetchUserPassword(const QString& userName)
 {
     auto conn = ConnectionPool::getConnection();
