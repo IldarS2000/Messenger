@@ -36,6 +36,11 @@ ClientCore::~ClientCore()
     delete clientSocket;
 }
 
+QString ClientCore::getName() const
+{
+    return name;
+}
+
 void ClientCore::connectToServer(const QHostAddress& address, const quint16 port)
 {
     clientSocket->connectToHost(address, port);
@@ -62,7 +67,6 @@ void ClientCore::login(const QString& username, const QString& password)
 void ClientCore::registerUser(const QString& username, const QString& password)
 {
     if (clientSocket->state() == QAbstractSocket::ConnectedState) {
-        this->name = username;
         QDataStream clientStream(clientSocket);
         clientStream.setVersion(SERIALIZER_VERSION);
 
@@ -74,16 +78,33 @@ void ClientCore::registerUser(const QString& username, const QString& password)
     }
 }
 
+void ClientCore::connectGroup(const QString& groupName, const QString& password)
+{
+    if (clientSocket->state() == QAbstractSocket::ConnectedState) {
+        this->group = groupName;
+        QDataStream clientStream(clientSocket);
+        clientStream.setVersion(SERIALIZER_VERSION);
+
+        QJsonObject packet;
+        packet[Packet::Type::TYPE]       = Packet::Type::CONNECT_GROUP;
+        packet[Packet::Data::GROUP_NAME] = groupName;
+        packet[Packet::Data::USERNAME]   = this->name;
+        packet[Packet::Data::PASSWORD]   = password;
+        clientStream << QJsonDocument(packet).toJson(QJsonDocument::Compact);
+    }
+}
+
 void ClientCore::sendMessage(const QString& message, const QString& time)
 {
     QDataStream clientStream(clientSocket);
     clientStream.setVersion(SERIALIZER_VERSION);
 
     QJsonObject packet;
-    packet[Packet::Type::TYPE]   = Packet::Type::MESSAGE;
-    packet[Packet::Data::SENDER] = name;
-    packet[Packet::Data::TEXT]   = message;
-    packet[Packet::Data::TIME]   = time;
+    packet[Packet::Type::TYPE]       = Packet::Type::MESSAGE;
+    packet[Packet::Data::GROUP_NAME] = this->group;
+    packet[Packet::Data::SENDER]     = this->name;
+    packet[Packet::Data::TEXT]       = message;
+    packet[Packet::Data::TIME]       = time;
     clientStream << QJsonDocument(packet).toJson();
 }
 
@@ -127,6 +148,21 @@ void ClientCore::handleRegisterPacket(const QJsonObject& packet)
     emit registerErrorSig(reasonVal.toString());
 }
 
+void ClientCore::handleConnectedToGroup(const QJsonObject& packet)
+{
+    const QJsonValue successVal = packet.value(QLatin1String(Packet::Data::SUCCESS));
+    if (successVal.isNull() || !successVal.isBool()) {
+        return;
+    }
+    const bool connectToGroupSuccess = successVal.toBool();
+    if (connectToGroupSuccess) {
+        emit connectedToGroupSig();
+        return;
+    }
+    const QJsonValue reasonVal = packet.value(QLatin1String(Packet::Data::REASON));
+    emit connectToGroupErrorSig(reasonVal.toString());
+}
+
 void ClientCore::handleMessagePacket(const QJsonObject& packet)
 {
     const QJsonValue senderVal = packet.value(QLatin1String(Packet::Data::SENDER));
@@ -141,7 +177,7 @@ void ClientCore::handleMessagePacket(const QJsonObject& packet)
     if (timeVal.isNull() || !timeVal.isString()) {
         return;
     }
-    emit messageReceivedSig({senderVal.toString(), textVal.toString(), timeVal.toString()});
+    emit messageReceivedSig({"", senderVal.toString(), textVal.toString(), timeVal.toString()});
 }
 
 void ClientCore::handleUserJoinedPacket(const QJsonObject& packet)
@@ -182,11 +218,12 @@ void ClientCore::handleInformJoinerPacket(const QJsonObject& packet)
     QJsonArray jsonMessages = messagesVal.toArray();
     QList<Message> messages;
     for (const auto& jsonMessage : jsonMessages) {
-        QJsonObject obj = jsonMessage.toObject();
-        QString sender  = obj[Packet::Data::SENDER].toString();
-        QString text    = obj[Packet::Data::TEXT].toString();
-        QString time    = obj[Packet::Data::TIME].toString();
-        messages.push_back({sender, text, time});
+        QJsonObject obj   = jsonMessage.toObject();
+        QString groupName = obj[Packet::Data::GROUP_NAME].toString();
+        QString sender    = obj[Packet::Data::SENDER].toString();
+        QString text      = obj[Packet::Data::TEXT].toString();
+        QString time      = obj[Packet::Data::TIME].toString();
+        messages.push_back({groupName, sender, text, time});
     }
     emit informJoinerSig(usernames, messages);
 }
@@ -202,6 +239,8 @@ void ClientCore::packetReceived(const QJsonObject& packet)
         handleLoginPacket(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::REGISTER)) {
         handleRegisterPacket(packet);
+    } else if (isEqualPacketType(packetTypeVal, Packet::Type::CONNECT_GROUP)) {
+        handleConnectedToGroup(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::MESSAGE)) {
         handleMessagePacket(packet);
     } else if (isEqualPacketType(packetTypeVal, Packet::Type::USER_JOINED)) {

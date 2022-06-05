@@ -25,7 +25,7 @@ private:
     QVector<ServerWorker*> clients;
 private slots:
     void unicast(const QJsonObject& packet, ServerWorker* receiver);
-    void broadcast(const QJsonObject& packet, ServerWorker* exclude);
+    void broadcast(const QString& group, const QJsonObject& packet, const ServerWorker* exclude);
     void packetReceived(ServerWorker* sender, const QJsonObject& packet);
     void userDisconnected(ServerWorker* sender, int threadIdx);
     static void userError(ServerWorker* sender);
@@ -34,11 +34,13 @@ public slots:
 
 private:
     void loginUser(ServerWorker* sender, const QJsonObject& packet);
-    static void registerUser(ServerWorker* sender, const QJsonObject& packet);
+    bool isUserLoggedIn(const QString& username);
+    void registerUser(ServerWorker* sender, const QJsonObject& packet);
     void packetFromLoggedOut(ServerWorker* sender, const QJsonObject& packet);
     void packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet);
+    void packetFromConnectedToGroup(ServerWorker* constsender, const QJsonObject& packet);
     QJsonArray getUsernames(ServerWorker* exclude) const;
-    static QJsonArray getMessages();
+    static QJsonArray getMessages(const QString& groupName);
     static void sendPacket(ServerWorker* destination, const QJsonObject& packet);
     static bool isEqualPacketType(const QJsonValue& jsonType, const char* strType);
 

@@ -8,7 +8,6 @@ Register::Register(QWidget* parent) : QWidget(parent), ui(new Ui::Register)
 {
     ui->setupUi(this);
     setWindowModality(Qt::ApplicationModal);
-    ui->nameLine->setFocus();
     ui->password1Line->setEchoMode(QLineEdit::Password);
     ui->password2Line->setEchoMode(QLineEdit::Password);
 
@@ -113,6 +112,7 @@ void Register::signUpClicked()
         QMessageBox::warning(this, tr("Error"), tr("name can contain only letters and cannot be more than 32 symbols"));
         return;
     }
+#ifdef NDEBUG
     if (!isValidDurablePassword(password)) {
         clearEditLines();
         QMessageBox::warning(this, tr("Error"),
@@ -120,6 +120,7 @@ void Register::signUpClicked()
                                 "less than 8 symbols and cannot be more than 32 symbols"));
         return;
     }
+#endif
     if (password != ui->password2Line->text()) {
         clearEditLines();
         QMessageBox::warning(this, tr("Error"), tr("passwords not equal"));

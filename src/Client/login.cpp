@@ -6,7 +6,6 @@ Login::Login(QWidget* parent) : QWidget(parent), ui(new Ui::Login)
     ui->setupUi(this);
     setWindowModality(Qt::ApplicationModal);
     this->setWindowState(Qt::WindowState::WindowActive);
-    ui->nameLine->setFocus();
     ui->passwordLine->setEchoMode(QLineEdit::Password);
 
     connect(ui->signInButton, &QPushButton::clicked, this, &Login::saveState);

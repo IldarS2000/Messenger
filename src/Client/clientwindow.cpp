@@ -26,15 +26,16 @@ ClientWindow::ClientWindow(QWidget* parent)
 
     chatModel->insertColumn(0);
     ui->chatView->setModel(chatModel);
-    ui->users->setFocusPolicy(Qt::NoFocus);
 
     // connect ui and client core
     connect(clientCore, &ClientCore::connectedSig, loadingScreen, &LoadingScreen::close);
     connect(clientCore, &ClientCore::connectedSig, this, &ClientWindow::connected);
     connect(clientCore, &ClientCore::loggedInSig, this, &ClientWindow::loggedIn);
     connect(clientCore, &ClientCore::registeredSig, this, &ClientWindow::registered);
+    connect(clientCore, &ClientCore::connectedToGroupSig, this, &ClientWindow::connectedToGroup);
     connect(clientCore, &ClientCore::loginErrorSig, this, &ClientWindow::loginError);
     connect(clientCore, &ClientCore::registerErrorSig, this, &ClientWindow::registerError);
+    connect(clientCore, &ClientCore::connectToGroupErrorSig, this, &ClientWindow::connectGroupError);
     connect(clientCore, &ClientCore::messageReceivedSig, this, &ClientWindow::messageReceived);
     connect(clientCore, &ClientCore::disconnectedSig, this, &ClientWindow::disconnected);
     connect(clientCore, &ClientCore::errorSig, this, &ClientWindow::error);
@@ -73,8 +74,8 @@ QPair<QString, QString> ClientWindow::getConnectionCredentials()
 {
     QDialog dialog(this);
     dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint & ~Qt::WindowMaximizeButtonHint);
-    dialog.setWindowTitle("Connect group");
-    dialog.resize(300, 100);
+    dialog.setWindowTitle("Connect Group");
+    dialog.resize(350, 155);
     QFormLayout form(&dialog);
 
     QLabel usernameLabel("group name");
@@ -121,10 +122,7 @@ void ClientWindow::attemptLogin(const QString& username, const QString& password
 void ClientWindow::loggedIn()
 {
     // enable main window ui
-    ui->sendButton->setEnabled(true);
-    ui->messageEdit->setEnabled(true);
-    ui->chatView->setEnabled(true);
-    ui->messageEdit->setFocus();
+    enableUi();
 
     // update for logged state
     lastUserName.clear();
@@ -148,6 +146,11 @@ void ClientWindow::loginError(const QString& reason)
 }
 
 void ClientWindow::registerError(const QString& reason)
+{
+    QMessageBox::critical(this, tr("Error"), reason);
+}
+
+void ClientWindow::connectGroupError(const QString& reason)
 {
     QMessageBox::critical(this, tr("Error"), reason);
 }
@@ -215,7 +218,7 @@ void ClientWindow::displayMessage(const QString& message, const QString& time, c
 void ClientWindow::messageReceived(const Message& message)
 {
     int currentRow = chatModel->rowCount();
-    if (lastUserName != message.getSender() && clientUserName != message.getSender()) {
+    if (lastUserName != message.getSender() && clientCore->getName() != message.getSender()) {
         lastUserName = message.getSender();
 
         QFont boldFont;
@@ -228,7 +231,7 @@ void ClientWindow::messageReceived(const Message& message)
         chatModel->setData(chatModel->index(currentRow, 0), boldFont, Qt::FontRole);
         ++currentRow;
     }
-    if (clientUserName == message.getSender()) {
+    if (clientCore->getName() == message.getSender()) {
         displayMessage(message.getMessage(), message.getTime(), currentRow, Qt::AlignRight);
     } else {
         displayMessage(message.getMessage(), message.getTime(), currentRow, Qt::AlignLeft);
@@ -256,9 +259,7 @@ void ClientWindow::disconnected()
 {
     qWarning() << "The host terminated the connection";
 
-    ui->sendButton->setEnabled(false);
-    ui->messageEdit->setEnabled(false);
-    ui->chatView->setEnabled(false);
+    disableUi();
     lastUserName.clear();
     logged = false;
     chatModel->removeRows(0, chatModel->rowCount());
@@ -303,6 +304,8 @@ void ClientWindow::userLeft(const QString& username)
 
 void ClientWindow::informJoiner(const QStringList& usernames, const QList<Message>& messages)
 {
+    chatModel->removeRows(0, chatModel->rowCount());
+    ui->users->clear();
     for (const auto& username : usernames) {
         ui->users->addItem(username);
     }
@@ -387,9 +390,8 @@ void ClientWindow::error(const QAbstractSocket::SocketError socketError)
             Q_UNREACHABLE();
     }
 
-    ui->sendButton->setEnabled(false);
-    ui->messageEdit->setEnabled(false);
-    ui->chatView->setEnabled(false);
+    disableUi();
+
     lastUserName.clear();
     logged = false;
     chatModel->removeRows(0, chatModel->rowCount());
@@ -410,7 +412,6 @@ QString ClientWindow::encryptPassword(const QString& password)
 void ClientWindow::signInClicked()
 {
     const QString userName          = loginWindow->getName();
-    clientUserName                  = userName;
     const QString encryptedPassword = encryptPassword(loginWindow->getPassword());
     attemptLogin(userName, encryptedPassword);
     loginWindow->clearState(); // for security reason clear sensitive info
@@ -441,7 +442,37 @@ void ClientWindow::createGroupClicked()
     createGroupWindow->show();
 }
 
+void ClientWindow::attemptConnectGroup(const QString& groupName, const QString& password)
+{
+    clientCore->connectGroup(groupName, password);
+}
+
 void ClientWindow::connectGroupClicked()
 {
     const auto& [name, password] = getConnectionCredentials();
+    attemptConnectGroup(name, "temp");
+}
+
+void ClientWindow::connectedToGroup()
+{
+    ui->sendButton->setEnabled(true);
+    ui->messageEdit->setEnabled(true);
+    ui->chatView->setEnabled(true);
+}
+
+void ClientWindow::enableUi()
+{
+    ui->createGroup->setEnabled(true);
+    ui->connectGroup->setEnabled(true);
+    ui->groupSettings->setEnabled(true);
+}
+
+void ClientWindow::disableUi()
+{
+    ui->sendButton->setEnabled(false);
+    ui->messageEdit->setEnabled(false);
+    ui->chatView->setEnabled(false);
+    ui->createGroup->setEnabled(false);
+    ui->connectGroup->setEnabled(false);
+    ui->groupSettings->setEnabled(false);
 }

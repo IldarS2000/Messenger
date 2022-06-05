@@ -71,14 +71,22 @@ void ServerCore::unicast(const QJsonObject& packet, ServerWorker* const receiver
     }
 }
 
-void ServerCore::broadcast(const QJsonObject& packet, ServerWorker* const exclude)
+void ServerCore::broadcast(const QString& group, const QJsonObject& packet, const ServerWorker* const exclude)
 {
-    for (ServerWorker* worker : clients) {
+    for (ServerWorker* const worker : clients) {
         Q_ASSERT(worker);
         if (worker != exclude) {
-            sendPacket(worker, packet);
+            if (worker->getGroupName() == group) {
+                sendPacket(worker, packet);
+            }
         }
     }
+}
+
+bool ServerCore::isUserLoggedIn(const QString& username)
+{
+    return std::any_of(clients.begin(), clients.end(),
+                       [&username](ServerWorker* worker) { return worker->getUserName() == username; });
 }
 
 void ServerCore::packetReceived(ServerWorker* sender, const QJsonObject& packet)
@@ -91,7 +99,14 @@ void ServerCore::packetReceived(ServerWorker* sender, const QJsonObject& packet)
         packetFromLoggedOut(sender, packet);
         return;
     }
-    packetFromLoggedIn(sender, packet);
+
+    const QString& groupName = sender->getGroupName();
+    if (groupName.isEmpty()) {
+        packetFromLoggedIn(sender, packet);
+        return;
+    }
+
+    packetFromConnectedToGroup(sender, packet);
 }
 
 void ServerCore::userDisconnected(ServerWorker* const sender, const int threadIdx)
@@ -103,7 +118,7 @@ void ServerCore::userDisconnected(ServerWorker* const sender, const int threadId
         QJsonObject packet;
         packet[Packet::Type::TYPE]     = Packet::Type::USER_LEFT;
         packet[Packet::Data::USERNAME] = userName;
-        broadcast(packet, nullptr);
+        broadcast(sender->getGroupName(), packet, nullptr);
         qInfo() << qPrintable(userName + QString(" disconnected"));
     }
     sender->deleteLater();
@@ -131,18 +146,20 @@ QJsonArray ServerCore::getUsernames(ServerWorker* const exclude) const
     for (ServerWorker* worker : clients) {
         Q_ASSERT(worker);
         if (worker != exclude) {
-            QString username = worker->getUserName();
-            if (!username.isEmpty()) {
-                usernames.push_back(qMove(username));
+            if (worker->getGroupName() == exclude->getGroupName()) {
+                QString username = worker->getUserName();
+                if (!username.isEmpty()) {
+                    usernames.push_back(qMove(username));
+                }
             }
         }
     }
     return usernames;
 }
 
-QJsonArray ServerCore::getMessages()
+QJsonArray ServerCore::getMessages(const QString& groupName)
 {
-    QList<Message> dbMessages = db::fetchMessages("main");
+    QList<Message> dbMessages = db::fetchMessages(groupName);
     QJsonArray messages;
     for (const auto& message : dbMessages) {
         QJsonObject leafObject;
@@ -259,35 +276,127 @@ void ServerCore::loginUser(ServerWorker* const sender, const QJsonObject& packet
     password.clear();
     //
 
+    if (isUserLoggedIn(userName)) {
+        QJsonObject errorPacket;
+        errorPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
+        errorPacket[Packet::Data::SUCCESS] = false;
+        errorPacket[Packet::Data::REASON]  = "user with such name already logged in";
+        sendPacket(sender, errorPacket);
+        return;
+    }
+
     // login success
     sender->setUserName(userName);
     QJsonObject successPacket;
     successPacket[Packet::Type::TYPE]    = Packet::Type::LOGIN;
     successPacket[Packet::Data::SUCCESS] = true;
     sendPacket(sender, successPacket);
+}
+
+void ServerCore::packetFromLoggedIn(ServerWorker* sender, const QJsonObject& packet)
+{
+    const QJsonValue typeVal = packet.value(QLatin1String(Packet::Type::TYPE));
+    if (typeVal.isNull() || !typeVal.isString()) {
+        return;
+    }
+    if (!isEqualPacketType(typeVal, Packet::Type::CONNECT_GROUP)) {
+        return;
+    }
+
+    // parse username
+    const QJsonValue usernameVal = packet.value(QLatin1String(Packet::Data::USERNAME));
+    if (usernameVal.isNull() || !usernameVal.isString()) {
+        return;
+    }
+    const QString userName = usernameVal.toString().simplified();
+    if (userName.isEmpty()) {
+        return;
+    }
+
+    // parse group name
+    const QJsonValue groupNameVal = packet.value(QLatin1String(Packet::Data::GROUP_NAME));
+    if (usernameVal.isNull() || !usernameVal.isString()) {
+        return;
+    }
+    const QString groupName = groupNameVal.toString().simplified();
+    if (groupName.isEmpty()) {
+        return;
+    }
+
+    if (!db::isGroupExist(groupName)) {
+        QJsonObject errorPacket;
+        errorPacket[Packet::Type::TYPE]    = Packet::Type::CONNECT_GROUP;
+        errorPacket[Packet::Data::SUCCESS] = false;
+        errorPacket[Packet::Data::REASON]  = "group with such name does not exist";
+        sendPacket(sender, errorPacket);
+        return;
+    }
+
+    // parse password
+    QJsonValue passwordVal = packet.value(QLatin1String(Packet::Data::PASSWORD));
+    if (passwordVal.isNull() || !passwordVal.isString()) {
+        return;
+    }
+    QString password = passwordVal.toString().simplified();
+    if (password.isEmpty()) {
+        return;
+    }
+
+    // check password
+    if (password != db::fetchGroupPassword(groupName)) {
+        QJsonObject errorPacket;
+        errorPacket[Packet::Type::TYPE]    = Packet::Type::CONNECT_GROUP;
+        errorPacket[Packet::Data::SUCCESS] = false;
+        errorPacket[Packet::Data::REASON]  = "invalid password";
+        sendPacket(sender, errorPacket);
+        return;
+    }
+    // for security reason clear sensitive info
+    passwordVal = QJsonValue();
+    password.clear();
+    //
+
+    // connect group success
+    sender->setGroupName(groupName);
+    QJsonObject successPacket;
+    successPacket[Packet::Type::TYPE]    = Packet::Type::CONNECT_GROUP;
+    successPacket[Packet::Data::SUCCESS] = true;
+    sendPacket(sender, successPacket);
 
     // send all messages to user
     QJsonObject unicastPacket;
     unicastPacket[Packet::Type::TYPE]      = Packet::Type::INFORM_JOINER;
-    unicastPacket[Packet::Data::USERNAMES] = this->getUsernames(sender);
-    unicastPacket[Packet::Data::MESSAGES]  = getMessages();
+    unicastPacket[Packet::Data::USERNAMES] = getUsernames(sender);
+    unicastPacket[Packet::Data::MESSAGES]  = getMessages(sender->getGroupName());
     this->unicast(unicastPacket, sender);
 
     // user joined broadcast
     QJsonObject connectedBroadcastPacket;
     connectedBroadcastPacket[Packet::Type::TYPE]     = Packet::Type::USER_JOINED;
     connectedBroadcastPacket[Packet::Data::USERNAME] = userName;
-    this->broadcast(connectedBroadcastPacket, sender);
+    this->broadcast(sender->getGroupName(), connectedBroadcastPacket, sender);
 }
 
-void ServerCore::packetFromLoggedIn(ServerWorker* const sender, const QJsonObject& packet)
+void ServerCore::packetFromConnectedToGroup(ServerWorker* const sender, const QJsonObject& packet)
 {
     Q_ASSERT(sender);
     const QJsonValue typeVal = packet.value(QLatin1String(Packet::Type::TYPE));
     if (typeVal.isNull() || !typeVal.isString()) {
         return;
     }
-    if (!isEqualPacketType(typeVal, Packet::Type::MESSAGE)) {
+
+    if (isEqualPacketType(typeVal, Packet::Type::CONNECT_GROUP)) {
+        packetFromLoggedIn(sender, packet);
+    } else if (!isEqualPacketType(typeVal, Packet::Type::MESSAGE)) {
+        return;
+    }
+
+    const QJsonValue groupVal = packet.value(QLatin1String(Packet::Data::GROUP_NAME));
+    if (groupVal.isNull() || !groupVal.isString()) {
+        return;
+    }
+    const QString groupName = groupVal.toString();
+    if (groupName.isEmpty()) {
         return;
     }
 
@@ -323,7 +432,7 @@ void ServerCore::packetFromLoggedIn(ServerWorker* const sender, const QJsonObjec
     broadcastPacket[Packet::Data::SENDER] = sender->getUserName();
     broadcastPacket[Packet::Data::TEXT]   = text;
     broadcastPacket[Packet::Data::TIME]   = time;
-    broadcast(broadcastPacket, sender);
+    broadcast(sender->getGroupName(), broadcastPacket, sender);
 
-    db::addMessage({senderName, text, time});
+    db::addMessage({groupName, senderName, text, time});
 }

@@ -6,6 +6,7 @@
 
 namespace db {
     bool isUserExist(const QString& userName);
+    bool isGroupExist(const QString& groupName);
     void addUser(const QString& userName, const QString& password);
     QString fetchUserPassword(const QString& userName);
     QString fetchGroupPassword(const QString& groupName);

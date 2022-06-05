@@ -18,6 +18,8 @@ public:
     virtual bool setSocketDescriptor(qintptr socketDescriptor);
     QString getUserName() const;
     void setUserName(const QString& name);
+    QString getGroupName() const;
+    void setGroupName(const QString& name);
     void sendPacket(const QJsonObject& packet);
 public slots:
     void disconnectFromClient();
@@ -31,7 +33,9 @@ signals:
 private:
     QSslSocket* serverSocket;
     QString userName;
+    QString groupName;
     mutable QReadWriteLock userNameLock;
+    mutable QReadWriteLock groupNameLock;
 };
 
 #endif // SERVER_WORKER_H

@@ -7,12 +7,14 @@ class Message
 {
 public:
     Message() = default;
-    Message(const QString& sender, const QString& message, const QString& time);
+    Message(const QString& groupName, const QString& sender, const QString& message, const QString& time);
+    [[nodiscard]] const QString& getGroupName() const;
     [[nodiscard]] const QString& getSender() const;
     [[nodiscard]] const QString& getMessage() const;
     [[nodiscard]] const QString& getTime() const;
 
 private:
+    QString groupName;
     QString sender;
     QString message;
     QString time;

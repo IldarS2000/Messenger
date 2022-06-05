@@ -17,9 +17,26 @@ class CreateGroup : public QWidget
 public:
     explicit CreateGroup(QWidget* parent = nullptr);
     ~CreateGroup() override;
+    [[nodiscard]] QString getName() const;
+    [[nodiscard]] QString getPassword() const;
+    [[nodiscard]] static bool isValidName(const QString& name);
+    [[nodiscard]] static bool isValidDurablePassword(const QString& password);
+    void clearState();
+
+private:
+    void clearEditLines();
+    void saveState();
+
+private slots:
+    void createGroupClicked();
+
+signals:
+    void createGroupSig();
 
 private:
     Ui::CreateGroup* ui;
+    QString name;
+    QString password;
 };
 
 

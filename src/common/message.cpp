@@ -1,8 +1,13 @@
 #include "message.h"
 
-Message::Message(const QString& sender, const QString& message, const QString& time)
-    : sender(sender), message(message), time(time)
+Message::Message(const QString& groupName, const QString& sender, const QString& message, const QString& time)
+    : groupName(groupName), sender(sender), message(message), time(time)
 {}
+
+const QString& Message::getGroupName() const
+{
+    return groupName;
+}
 
 const QString& Message::getSender() const
 {

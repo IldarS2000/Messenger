@@ -27,7 +27,6 @@ private:
     Ui::ClientWindow* ui;
     ClientCore* clientCore;
     QStandardItemModel* chatModel;
-    QString clientUserName;
     QString lastUserName;
     Login* loginWindow;
     Register* registerWindow;
@@ -42,8 +41,10 @@ private slots:
     void connected();
     void loggedIn();
     void registered();
+    void connectedToGroup();
     void loginError(const QString& reason);
     void registerError(const QString& reason);
+    void connectGroupError(const QString& reason);
     void messageReceived(const Message& message);
     void sendMessage();
     void disconnected();
@@ -62,6 +63,9 @@ private:
     void attemptConnection();
     void attemptLogin(const QString& username, const QString& password);
     void attemptRegister(const QString& username, const QString& password);
+    void attemptConnectGroup(const QString& groupName, const QString& password);
+    void enableUi();
+    void disableUi();
 
     QPair<QString, QString> getConnectionCredentials();
     static QStringList splitString(const QString& str, int rowSize);

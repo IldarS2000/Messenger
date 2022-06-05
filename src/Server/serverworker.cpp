@@ -83,6 +83,21 @@ void ServerWorker::setUserName(const QString& name)
     userNameLock.unlock();
 }
 
+QString ServerWorker::getGroupName() const
+{
+    groupNameLock.lockForRead();
+    QString result = groupName;
+    groupNameLock.unlock();
+    return result;
+}
+
+void ServerWorker::setGroupName(const QString& name)
+{
+    groupNameLock.lockForWrite();
+    groupName = name;
+    groupNameLock.unlock();
+}
+
 void ServerWorker::onReadyRead()
 {
     QByteArray jsonData;
