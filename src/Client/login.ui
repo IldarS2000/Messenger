@@ -160,6 +160,13 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>nameLine</tabstop>
+  <tabstop>passwordLine</tabstop>
+  <tabstop>forgorPassButton</tabstop>
+  <tabstop>signInButton</tabstop>
+  <tabstop>signUpButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

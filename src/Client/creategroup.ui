@@ -92,6 +92,12 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>nameLine</tabstop>
+  <tabstop>passwordLine</tabstop>
+  <tabstop>needPasswordCheck</tabstop>
+  <tabstop>createGroup</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

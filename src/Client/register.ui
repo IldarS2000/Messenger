@@ -128,8 +128,10 @@
   </widget>
  </widget>
  <tabstops>
-  <tabstop>password2Line</tabstop>
   <tabstop>nameLine</tabstop>
+  <tabstop>password1Line</tabstop>
+  <tabstop>password2Line</tabstop>
+  <tabstop>signUpButton</tabstop>
  </tabstops>
  <resources/>
  <connections/>
